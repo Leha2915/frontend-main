@@ -1,0 +1,60 @@
+name: Deploy Frontend to Heroku
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME_FRONTEND }}
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "$HEROKU_API_KEY" ]; then
+            echo "Missing HEROKU_API_KEY secret"
+            exit 1
+          fi
+          if [ -z "$HEROKU_APP_NAME" ]; then
+            echo "Missing HEROKU_APP_NAME_FRONTEND secret"
+            exit 1
+          fi
+
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Configure Heroku buildpack
+        run: |
+          heroku stack:set heroku-24 --app "$HEROKU_APP_NAME"
+          heroku buildpacks:clear --app "$HEROKU_APP_NAME"
+          heroku buildpacks:add heroku/nodejs --app "$HEROKU_APP_NAME"
+
+      - name: Set frontend config vars
+        run: |
+          if [ -n "$NEXT_PUBLIC_API_URL" ]; then
+            heroku config:set NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" --app "$HEROKU_APP_NAME"
+          fi
+
+      - name: Deploy to Heroku
+        run: |
+          if git remote get-url heroku >/dev/null 2>&1; then
+            git remote set-url heroku "https://heroku:${HEROKU_API_KEY}@git.heroku.com/${HEROKU_APP_NAME}.git"
+          else
+            git remote add heroku "https://heroku:${HEROKU_API_KEY}@git.heroku.com/${HEROKU_APP_NAME}.git"
+          fi
+          git push heroku HEAD:main
+
+      - name: Smoke test frontend
+        run: |
+          APP_URL="https://${HEROKU_APP_NAME}.herokuapp.com"
+          curl -fsSL "$APP_URL" >/dev/null
