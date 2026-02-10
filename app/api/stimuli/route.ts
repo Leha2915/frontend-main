@@ -1,39 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
-import { ChatCompletionMessageParam } from 'openai/resources'
-
-//TODO: ins backend!
 
 export async function POST(request: NextRequest) {
-  const { role_prompt, model, OPENAI_API_KEY, base_url } = await request.json()
-
-  // OpenAI-Client mit dynamischer baseURL initialisieren
-  const openai = new OpenAI({
-    apiKey: OPENAI_API_KEY,
-    baseURL: base_url || 'https://api.openai.com/v1', // Fallback auf Standard-URL
-  })
-
-  const outboundMessages: ChatCompletionMessageParam[] = [
-    {
-      role: 'user',
-      content: role_prompt,
-    },
-  ]
+  const body = await request.json()
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL
 
   try {
-    const completion = await openai.chat.completions.create({
-      messages: outboundMessages,
-      model,
-      presence_penalty: 0,
-      temperature: 1,
-      response_format: {
-        type: 'json_object',
+    const authHeader = request.headers.get("authorization")
+    const res = await fetch(`${backendUrl}/stimuli/suggest`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authHeader ? { Authorization: authHeader } : {}),
       },
+      body: JSON.stringify(body),
     })
 
-    return NextResponse.json(completion)
-  } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error }, { status: 500 })
+    const contentType = res.headers.get("content-type")
+    const data = contentType?.includes("application/json") ? await res.json() : await res.text()
+    if (!res.ok) {
+      return NextResponse.json(
+        typeof data === "string" ? { error: data } : data,
+        { status: res.status }
+      )
+    }
+    return NextResponse.json(data)
+  } catch (err: any) {
+    console.error("Stimuli proxy failed:", err)
+    return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 })
   }
 }
