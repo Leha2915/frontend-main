@@ -2,18 +2,8 @@
 
 import { useEffect, useState } from "react";
 import RequireAuthLevel from "@/components/RequireAuthLevel";
-import { Button } from "@/components/ui/button";
-import dynamic from "next/dynamic";
-
-const AnalyticsLazy = dynamic(
-  () => import("@/app/analytics/page").then((m) => m.default),
-  { ssr: false }
-);
 
 const api_url = process.env.NEXT_PUBLIC_API_URL;
-const DEFAULT_FINISH_NEXT_TITLE = "What happens next?";
-const DEFAULT_FINISH_NEXT_BODY = "Please continue with the next part of the study by following this link:";
-const DEFAULT_FINISH_NEXT_LINK = "https://survey.iism.kit.edu/index.php/821265?newtest=Y&lang=en";
 
 type FinishCopy = {
   finish_next_title?: string | null;
@@ -22,28 +12,54 @@ type FinishCopy = {
 };
 
 export default function FinishPage() {
-  const [finishTitle, setFinishTitle] = useState(DEFAULT_FINISH_NEXT_TITLE);
-  const [finishBody, setFinishBody] = useState(DEFAULT_FINISH_NEXT_BODY);
-  const [finishLink, setFinishLink] = useState(DEFAULT_FINISH_NEXT_LINK);
+  const [finishTitle, setFinishTitle] = useState<string | null>(null);
+  const [finishBody, setFinishBody] = useState<string | null>(null);
+  const [finishLink, setFinishLink] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const slug = localStorage.getItem("project");
-    if (!slug || !api_url) return;
+    if (!slug) {
+      setError("Missing project slug for finish page.");
+      return;
+    }
+    if (!api_url) {
+      setError("NEXT_PUBLIC_API_URL is not configured.");
+      return;
+    }
 
     (async () => {
       try {
         const res = await fetch(`${api_url}/projects/${slug}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          throw new Error(`Failed to load project details (status ${res.status}).`);
+        }
         const project = (await res.json()) as FinishCopy;
 
-        if (project.finish_next_title?.trim()) setFinishTitle(project.finish_next_title.trim());
-        if (project.finish_next_body?.trim()) setFinishBody(project.finish_next_body.trim());
-        if (project.finish_next_link?.trim()) setFinishLink(project.finish_next_link.trim());
+        const title = project.finish_next_title?.trim();
+        const body = project.finish_next_body?.trim();
+        const link = project.finish_next_link?.trim();
+
+        if (!title || !body || !link) {
+          throw new Error("Finish page copy is missing in project configuration.");
+        }
+
+        setFinishTitle(title);
+        setFinishBody(body);
+        setFinishLink(link);
       } catch (err) {
-        console.warn("Unable to load finish page custom text, using defaults.");
+        setError(err instanceof Error ? err.message : "Failed to load finish page copy.");
       }
     })();
   }, []);
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  if (!finishTitle || !finishBody || !finishLink) {
+    return null;
+  }
 
   return (
     <RequireAuthLevel allowGuest>

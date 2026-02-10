@@ -1,7 +1,6 @@
-import { useEffect, useContext } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useJWTAuth } from '@/context/jwtAuth'
-import { SettingsContext } from '@/context/settings'
 
 export default function RequireAuthLevel({
   children,
@@ -10,32 +9,22 @@ export default function RequireAuthLevel({
   children: React.ReactNode
   allowGuest?: boolean
 }) {
-  const { isLoggedIn, isGuest } = useJWTAuth()
+  const { isHydrated, isLoggedIn, isGuest } = useJWTAuth()
   const router = useRouter()
-
-  const sc = useContext(SettingsContext)
 
   const accessAllowed =
     isLoggedIn || (allowGuest && isGuest)
 
   useEffect(() => {
-
-    const auth = localStorage.getItem("auth");
-    const project = localStorage.getItem("project");
-
-    if (
-      (allowGuest && project) ||
-      (allowGuest && auth) ||
-      auth === "user"
-    ) {
+    if (!isHydrated) {
       return;
     }
-    
     if (!accessAllowed) {
       router.replace('/login')
     }
-  }, [accessAllowed])
+  }, [isHydrated, accessAllowed, router])
 
+  if (!isHydrated) return null
   if (!accessAllowed) return null
 
   return <>{children}</>
