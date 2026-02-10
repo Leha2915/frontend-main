@@ -508,7 +508,7 @@ export default function Dashboard() {
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">2</div>
-                            <h2 className="text-lg font-semibold text-gray-900">API Configuration</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">Service & API Configuration</h2>
                         </div>
                         
                         <Card className="border-gray-200">
@@ -539,11 +539,11 @@ export default function Dashboard() {
                                 {!apiConfigAdvanced && (
                                     <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
                                         <p className="font-medium text-gray-900">Default configuration summary</p>
-                                        <p><span className="text-gray-500">Provider:</span> OpenAI (default)</p>
-                                        <p><span className="text-gray-500">Base URL:</span> {OPENAI_DEFAULT_BASE_URL}</p>
-                                        <p><span className="text-gray-500">API Key source:</span> Secure backend default config var</p>
-                                        <p><span className="text-gray-500">Advanced provider settings:</span> Disabled</p>
-                                        <p><span className="text-gray-500">Speech/Voice storage keys:</span> Managed by backend defaults</p>
+                                        <p><span className="text-gray-500">LLM provider:</span> OpenAI (default)</p>
+                                        <p><span className="text-gray-500">LLM base URL:</span> {OPENAI_DEFAULT_BASE_URL}</p>
+                                        <p><span className="text-gray-500">Speech-to-Text provider:</span> Microsoft Azure</p>
+                                        <p><span className="text-gray-500">Voice output provider:</span> Browser TTS (optional ElevenLabs in Advanced)</p>
+                                        <p><span className="text-gray-500">Voice storage provider:</span> Cloudflare R2</p>
                                     </div>
                                 )}
 
@@ -605,6 +605,22 @@ export default function Dashboard() {
                                                     : <EyeIcon onClick={() => setKeyVisible(true)} className="cursor-pointer" />
                                                 }
                                             </div>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            <Label htmlFor="model-step2-advanced">Model</Label>
+                                            <Select value={sc.model || undefined} onValueChange={(model) => sc.setModel(model)}>
+                                                <SelectTrigger id="model-step2-advanced" className="items-start">
+                                                    <SelectValue placeholder="Select a model" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    {isLoadingModels && <SelectItem disabled value="loading">Loading models...</SelectItem>}
+                                                    {modelLoadError && <SelectItem disabled value="error">{modelLoadError}</SelectItem>}
+                                                    {availableModels.map((modelId) => (
+                                                        <SelectItem key={modelId} value={modelId}>{modelId}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
 
                                         <div className="grid gap-1">
@@ -704,6 +720,153 @@ export default function Dashboard() {
                                         </div>
                                     </>
                                 )}
+
+                                <div className="rounded-md border border-gray-200 bg-white p-4 space-y-4">
+                                    <p className="text-sm font-medium text-gray-900">Interview interaction settings</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid gap-3">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="tree-enabled-step2" className="place-self-start">
+                                                        Enable permanent tree view <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="left" sideOffset={5}>
+                                                    Interviewee can see their own tree at any point of time in the interview (default: false)
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Select
+                                                value={String(treeEnabled)}
+                                                onValueChange={(v) => setTreeEnabled(v === "true")}
+                                            >
+                                                <SelectTrigger id="tree-enabled-step2" className="items-start">
+                                                    <SelectValue placeholder="Select option" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    <SelectItem value="true">True</SelectItem>
+                                                    <SelectItem value="false">False</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="interview-mode-step2" className="place-self-start">
+                                                        Interview mode <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="left" sideOffset={5}>
+                                                    <div>Hybrid     - Dialog with agent is enabled, but the user can also type directly</div>
+                                                    <div>Text only  - Dialog with agent is disabled</div>
+                                                    <div>Voice only - Dialog with agent is the only interaction</div>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Select
+                                                value={String(interviewMode)}
+                                                onValueChange={(v) => {
+                                                    setInterviewMode(Number(v));
+                                                    if (v == "2") {setAdvancedVoiceEnabled(false); setVoiceEnabled(false);}
+                                                    if (v == "3") {setAdvancedVoiceEnabled(true);}
+                                                }}
+                                            >
+                                                <SelectTrigger id="interview-mode-step2" className="items-start">
+                                                    <SelectValue placeholder="Select option" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    <SelectItem value="1">Hybrid</SelectItem>
+                                                    <SelectItem value="2">Text Only</SelectItem>
+                                                    <SelectItem value="3">Voice Only</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="voice-enabled-step2" className="place-self-start">
+                                                        Enable Dictate Button <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    Enables user voice input and its transcription
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Select
+                                                value={String(voiceEnabled)}
+                                                onValueChange={(v) => {
+                                                    setVoiceEnabled(v === "true");
+                                                    if (interviewMode == 2 && v === "true") {setInterviewMode(1)}
+                                                    if (!advancedVoiceEnabled && v === "false") {setInterviewMode(2)}
+                                                }}
+                                            >
+                                                <SelectTrigger id="voice-enabled-step2" className="items-start">
+                                                    <SelectValue placeholder="Select option" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    <SelectItem value="true">True</SelectItem>
+                                                    <SelectItem value="false">False</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="advanced-voice-enabled-step2" className="place-self-start">
+                                                        Enable Voice Agent Button <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    Enables direct communication
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Select
+                                                value={String(advancedVoiceEnabled)}
+                                                onValueChange={(v) => {
+                                                    setAdvancedVoiceEnabled(v === "true");
+                                                    if (interviewMode == 2 && v === "true") {setInterviewMode(1)}
+                                                    if (!voiceEnabled && v === "false") {setInterviewMode(2)}
+                                                }}
+                                            >
+                                                <SelectTrigger id="advanced-voice-enabled-step2" className="items-start">
+                                                    <SelectValue placeholder="Select option" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    <SelectItem value="true">True</SelectItem>
+                                                    <SelectItem value="false">False</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="language-step2" className="place-self-start">
+                                                        Language <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    The Language of the experiment
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Select
+                                                value={String(language)}
+                                                onValueChange={(v) => {
+                                                    setLanguage(v)
+                                                }}
+                                            >
+                                                <SelectTrigger id="language-step2" className="items-start">
+                                                    <SelectValue placeholder="Select option" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    <SelectItem value="en">English</SelectItem>
+                                                    <SelectItem value="de">German</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                </div>
                             </CardContent>
 
                             <CardFooter className="p-3 pt-2 flex justify-center">
@@ -771,23 +934,6 @@ export default function Dashboard() {
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
                             <div className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="grid gap-3">
-
-                                            <Label htmlFor="model">Model</Label>
-                                            <Select value={sc.model || undefined} onValueChange={(model) => sc.setModel(model)}>
-                                                <SelectTrigger id="model" className="items-start">
-                                                    <SelectValue placeholder="Select a model" />
-                                                </SelectTrigger>
-                                                <SelectContent className="bg-white">
-                                                    {isLoadingModels && <SelectItem disabled value="loading">Loading models...</SelectItem>}
-                                                    {modelLoadError && <SelectItem disabled value="error">{modelLoadError}</SelectItem>}
-                                                    {availableModels.map((modelId) => (
-                                                        <SelectItem key={modelId} value={modelId}>{modelId}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
                                         <div className="grid gap-3">
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -907,131 +1053,6 @@ export default function Dashboard() {
                                         </div>
 
 
-                                        <div className="grid gap-3">
-                                            
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Label htmlFor="tree-enabled" className="place-self-start">
-                                                    Enable permanent tree view <Info className="size-4 inline-block ml-1" />
-                                                    </Label>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="left" sideOffset={5}>
-                                                    Interviewee can see their own tree at any point of time in the interview (default: false)
-                                                </TooltipContent>
-                                            </Tooltip>
-
-                                            <Select
-                                            value={String(treeEnabled)}
-                                            onValueChange={(v) => setTreeEnabled(v === "true")}
-                                            >
-                                            <SelectTrigger id="tree-enabled" className="items-start">
-                                                <SelectValue placeholder="Select option" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-white">
-                                                <SelectItem value="true">True</SelectItem>
-                                                <SelectItem value="false">False</SelectItem>
-                                            </SelectContent>
-                                            </Select>
-                                        </div>
-
-
-                                        <div className="grid gap-3">
-                                            
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Label htmlFor="advanced-voice-enabled" className="place-self-start">
-                                                    Interview mode <Info className="size-4 inline-block ml-1" />
-                                                    </Label>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="left" sideOffset={5}>
-                                                    <div>Hybrid     - Dialog with agent is enabled, but the user can also type directly</div>
-                                                    <div>Text only  - Dialog with agent is disabled</div>
-                                                    <div>Voice only - Dialog with agent is the only interaction</div>
-                                                </TooltipContent>
-                                            </Tooltip>
-
-                                            <Select
-                                            value={String(interviewMode)}
-                                            onValueChange={(v) => {
-                                                setInterviewMode(Number(v));
-                                                if (v == "2") {setAdvancedVoiceEnabled(false); setVoiceEnabled(false);}
-                                                if (v == "3") {setAdvancedVoiceEnabled(true);}
-                                            }}
-                                            >
-                                            <SelectTrigger id="advanced-voice-enabled" className="items-start">
-                                                <SelectValue placeholder="Select option" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-white">
-                                                <SelectItem value="1">Hybrid</SelectItem>
-                                                <SelectItem value="2">Text Only</SelectItem>
-                                                <SelectItem value="3">Voice Only</SelectItem>
-                                            </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="grid gap-3">
-                                            
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Label htmlFor="voice-enabled" className="place-self-start">
-                                                    Enable Dictate Button <Info className="size-4 inline-block ml-1" />
-                                                    </Label>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="right" sideOffset={5}>
-                                                    Enables user voice input and its transcription
-                                                </TooltipContent>
-                                            </Tooltip>
-
-                                            <Select
-                                            value={String(voiceEnabled)}
-                                            onValueChange={(v) => {
-                                                setVoiceEnabled(v === "true");
-                                                if (interviewMode == 2 && v === "true") {setInterviewMode(1)}
-                                                if (!advancedVoiceEnabled && v === "false") {setInterviewMode(2)}
-                                            
-                                            }}
-                                            >
-                                            <SelectTrigger id="voice-enabled" className="items-start">
-                                                <SelectValue placeholder="Select option" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-white">
-                                                <SelectItem value="true">True</SelectItem>
-                                                <SelectItem value="false">False</SelectItem>
-                                            </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="grid gap-3">
-                                            
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Label htmlFor="voice-enabled" className="place-self-start">
-                                                    Enable Voice Agent Button<Info className="size-4 inline-block ml-1" />
-                                                    </Label>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="right" sideOffset={5}>
-                                                    Enables direct communication
-                                                </TooltipContent>
-                                            </Tooltip>
-
-                                            <Select
-                                            value={String(advancedVoiceEnabled)}
-                                            onValueChange={(v) => {
-                                                setAdvancedVoiceEnabled(v === "true");
-                                                if (interviewMode == 2 && v === "true") {setInterviewMode(1)}
-                                                if (!voiceEnabled && v === "false") {setInterviewMode(2)}
-                                            }}
-                                            >
-                                            <SelectTrigger id="advanced-voice-enabled" className="items-start">
-                                                <SelectValue placeholder="Select option" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-white">
-                                                <SelectItem value="true">True</SelectItem>
-                                                <SelectItem value="false">False</SelectItem>
-                                            </SelectContent>
-                                            </Select>
-                                        </div>
-
                                     {advancedVoiceEnabled &&
 
                                         <div className="grid gap-3">
@@ -1065,35 +1086,6 @@ export default function Dashboard() {
 
 
                                     }
-
-                                    <div className="grid gap-3">
-                                        
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Label htmlFor="voice-enabled" className="place-self-start">
-                                                Language<Info className="size-4 inline-block ml-1" />
-                                                </Label>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="right" sideOffset={5}>
-                                                The Language of the experiment
-                                            </TooltipContent>
-                                        </Tooltip>
-
-                                        <Select
-                                        value={String(language)}
-                                        onValueChange={(v) => {
-                                            setLanguage(v)
-                                        }}
-                                        >
-                                        <SelectTrigger id="advanced-voice-enabled" className="items-start">
-                                            <SelectValue placeholder="Select option" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white">
-                                            <SelectItem value="en">English</SelectItem>
-                                            <SelectItem value="de">German</SelectItem>
-                                        </SelectContent>
-                                        </Select>
-                                    </div>
 
                                     </div>
 
