@@ -535,23 +535,24 @@ export default function Dashboard() {
                                 </div>
                             </CardHeader>
 
-                            <CardContent className="space-y-4">
-                                {!apiConfigAdvanced && (
-                                    <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
-                                        <p className="font-medium text-gray-900">Default configuration summary</p>
-                                        <p><span className="text-gray-500">LLM provider:</span> OpenAI (default)</p>
-                                        <p><span className="text-gray-500">LLM base URL:</span> {OPENAI_DEFAULT_BASE_URL}</p>
-                                        <p><span className="text-gray-500">Model:</span> {sc.model || "gpt-4o (default)"}</p>
-                                        <p><span className="text-gray-500">Speech-to-Text provider:</span> Microsoft Azure</p>
-                                        {advancedVoiceEnabled && (
-                                            <p><span className="text-gray-500">Voice output provider:</span> ElevenLabs (if configured) with Browser TTS fallback</p>
-                                        )}
-                                        <p><span className="text-gray-500">Voice storage provider:</span> Cloudflare R2</p>
-                                    </div>
-                                )}
+                            <CardContent className="space-y-4 flex flex-col">
+                                <div className="order-2 space-y-4">
+                                    {!apiConfigAdvanced && (
+                                        <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
+                                            <p className="font-medium text-gray-900">Default configuration summary</p>
+                                            <p><span className="text-gray-500">LLM provider:</span> OpenAI (default)</p>
+                                            <p><span className="text-gray-500">LLM base URL:</span> {OPENAI_DEFAULT_BASE_URL}</p>
+                                            <p><span className="text-gray-500">Model:</span> {sc.model || "gpt-4o (default)"}</p>
+                                            <p><span className="text-gray-500">Speech-to-Text provider:</span> Microsoft Azure</p>
+                                            {advancedVoiceEnabled && (
+                                                <p><span className="text-gray-500">Voice output provider:</span> ElevenLabs (if configured) with Browser TTS fallback</p>
+                                            )}
+                                            <p><span className="text-gray-500">Voice storage provider:</span> Cloudflare R2</p>
+                                        </div>
+                                    )}
 
-                                {apiConfigAdvanced && (
-                                    <>
+                                    {apiConfigAdvanced && (
+                                        <>
                                         <div className="flex flex-col gap-1">
                                             <Label htmlFor="base-url">Provider</Label>
                                             <Select
@@ -721,27 +722,29 @@ export default function Dashboard() {
                                                 }}
                                             />
                                         </div>
-                                    </>
-                                )}
+                                        </>
+                                    )}
+                                </div>
 
-                                {!apiConfigAdvanced && (
-                                    <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
-                                        <p className="font-medium text-gray-900">Interview interaction settings summary</p>
-                                        <p><span className="text-gray-500">Enable permanent tree view:</span> {String(treeEnabled)}</p>
-                                        <p><span className="text-gray-500">Interview mode:</span> {interviewMode === 1 ? "Hybrid" : interviewMode === 2 ? "Text Only" : "Voice Only"}</p>
-                                        <p><span className="text-gray-500">Enable Dictate Button:</span> {String(voiceEnabled)}</p>
-                                        <p><span className="text-gray-500">Enable Voice Agent Button:</span> {String(advancedVoiceEnabled)}</p>
-                                        <p><span className="text-gray-500">Language:</span> {language === "de" ? "German" : "English"}</p>
-                                        {advancedVoiceEnabled && (
-                                            <p><span className="text-gray-500">Voice output provider:</span> ElevenLabs (if configured) with Browser TTS fallback</p>
-                                        )}
-                                    </div>
-                                )}
+                                <div className="order-1 space-y-4">
+                                    {!apiConfigAdvanced && (
+                                        <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
+                                            <p className="font-medium text-gray-900">Interview interaction settings summary</p>
+                                            <p><span className="text-gray-500">Enable permanent tree view:</span> {String(treeEnabled)}</p>
+                                            <p><span className="text-gray-500">Interview mode:</span> {interviewMode === 1 ? "Hybrid" : interviewMode === 2 ? "Text Only" : "Voice Only"}</p>
+                                            <p><span className="text-gray-500">Enable Dictate Button:</span> {String(voiceEnabled)}</p>
+                                            <p><span className="text-gray-500">Enable Voice Agent Button:</span> {String(advancedVoiceEnabled)}</p>
+                                            <p><span className="text-gray-500">Language:</span> {language === "de" ? "German" : "English"}</p>
+                                            {advancedVoiceEnabled && (
+                                                <p><span className="text-gray-500">Voice output provider:</span> ElevenLabs (if configured) with Browser TTS fallback</p>
+                                            )}
+                                        </div>
+                                    )}
 
-                                {apiConfigAdvanced && (
-                                    <div className="rounded-md border border-gray-200 bg-white p-4 space-y-4">
-                                        <p className="text-sm font-medium text-gray-900">Interview interaction settings</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {apiConfigAdvanced && (
+                                        <div className="rounded-md border border-gray-200 bg-white p-4 space-y-4">
+                                            <p className="text-sm font-medium text-gray-900">Interview interaction settings</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="grid gap-3">
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -883,9 +886,10 @@ export default function Dashboard() {
                                                     </SelectContent>
                                                 </Select>
                                             </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </CardContent>
 
                             <CardFooter className="p-3 pt-2 flex justify-center">
