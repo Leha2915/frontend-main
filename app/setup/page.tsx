@@ -28,6 +28,7 @@ type ButtonEvent = React.MouseEvent<HTMLButtonElement>
 type ChangeEvent = React.ChangeEvent<HTMLTextAreaElement>
 
 const api_url = process.env.NEXT_PUBLIC_API_URL;
+const OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1";
 
 
 export default function Dashboard() {
@@ -78,10 +79,11 @@ export default function Dashboard() {
         { label: "Custom", value: "custom" }
     ]
 
-    const [customBaseURL, setCustomBaseURL] = useState(sc.baseURL || "")
+    const [customBaseURL, setCustomBaseURL] = useState(sc.baseURL || OPENAI_DEFAULT_BASE_URL)
     const [selectedBaseURL, setSelectedBaseURL] = useState(() => {
         // Initialwert: ist baseURL in Liste? Wenn ja → Wert, sonst "custom"
-        const known = predefinedBaseURLs.find(p => p.value === sc.baseURL)
+        const effectiveBaseURL = sc.baseURL || OPENAI_DEFAULT_BASE_URL
+        const known = predefinedBaseURLs.find(p => p.value === effectiveBaseURL)
         return known ? known.value : "custom"
     })
 
@@ -164,9 +166,19 @@ export default function Dashboard() {
         sc.setTopic("")
         sc.setDescription("")
         sc.setStimuli(["", "", ""])
+        if (!sc.baseURL) {
+            sc.setBaseURL(OPENAI_DEFAULT_BASE_URL)
+        }
         setTopicCount(0)
         setDescriptionCount(0)
     }, [])
+
+    useEffect(() => {
+        if (!apiConfigAdvanced) {
+            setSelectedBaseURL(OPENAI_DEFAULT_BASE_URL)
+            sc.setBaseURL(OPENAI_DEFAULT_BASE_URL)
+        }
+    }, [apiConfigAdvanced])
 
     useEffect(() => {
         setStartable(checkConfig({ ...sc, keyTestResult, availableModels }).startable)
@@ -219,10 +231,16 @@ export default function Dashboard() {
     }, [sc.baseURL, sc.openaiAPIKey])
 
     useEffect(() => {
+    if (!apiConfigAdvanced) {
+        setKeyTestMessage("Default mode active - secure backend defaults are used");
+        setKeyTestResult(true);
+        return;
+    }
+
     const key = sc.openaiAPIKey?.trim();
     if (!key) {
-        setKeyTestMessage("No key entered - backend default is used if configured");
-        setKeyTestResult(true);
+        setKeyTestMessage("Please provide an API key or switch to Default mode");
+        setKeyTestResult(false);
         return;
     }
 
@@ -237,7 +255,7 @@ export default function Dashboard() {
     return () => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-    }, [sc.openaiAPIKey, sc.baseURL]);
+    }, [apiConfigAdvanced, sc.openaiAPIKey, sc.baseURL]);
 
 
     const handleAddInput = () => {
@@ -306,31 +324,31 @@ export default function Dashboard() {
             description: sc.description,
             stimuli: sc.stimuli,
             n_stimuli: sc.n_stimuli,
-            api_key: sc.openaiAPIKey,
+            api_key: apiConfigAdvanced ? sc.openaiAPIKey : "",
             model: sc.model,
-            base_url: sc.baseURL,
+            base_url: apiConfigAdvanced ? sc.baseURL : OPENAI_DEFAULT_BASE_URL,
             n_values_max: sc.n_values_max,
             min_nodes: minNodes,
             voice_enabled: voiceEnabled,
             tree_enabled: treeEnabled,
             advanced_voice_enabled: advancedVoiceEnabled,
             interview_mode: interviewMode,
-            elevenlabs_api_key: elevenabsKey,
+            elevenlabs_api_key: apiConfigAdvanced ? elevenabsKey : "",
             max_retries: maxRetries,
             auto_send: autoSend,
             time_limit: timeLimit,
 
-            r2_account_id: r2ID,
-            r2_access_key_id: r2Key,
-            r2_secret_access_key: r2Secret,
-            r2_bucket: r2Bucket, 
+            r2_account_id: apiConfigAdvanced ? r2ID : "",
+            r2_access_key_id: apiConfigAdvanced ? r2Key : "",
+            r2_secret_access_key: apiConfigAdvanced ? r2Secret : "",
+            r2_bucket: apiConfigAdvanced ? r2Bucket : "",
             
             language: language,
 
             internal_id: internalId,
 
-            stt_key: sttKey,
-            stt_endpoint: sttEndpoint,
+            stt_key: apiConfigAdvanced ? sttKey : "",
+            stt_endpoint: apiConfigAdvanced ? sttEndpoint : "",
         }),
         });
 
@@ -495,7 +513,11 @@ export default function Dashboard() {
                         
                         <Card className="border-gray-200">
                             <CardHeader className="pb-4">
-                                <CardDescription>Please enter your OpenAI Provider and API Key.</CardDescription>
+                                <CardDescription>
+                                    {apiConfigAdvanced
+                                        ? "Configure provider and API credentials manually."
+                                        : "Use secure backend defaults for provider credentials."}
+                                </CardDescription>
                                 <div className="flex items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 mt-2">
                                     <div className="text-sm">
                                         <span className="font-medium">{apiConfigAdvanced ? "Advanced" : "Default"}</span>
@@ -514,67 +536,77 @@ export default function Dashboard() {
                             </CardHeader>
 
                             <CardContent className="space-y-4">
-                                <div className="flex flex-col gap-1">
-                                    <Label htmlFor="base-url">Provider</Label>
-                                    <Select
-                                        value={selectedBaseURL}
-                                        onValueChange={(val) => {
-                                            setKeyTestMessage("Please test your key")
-                                            setKeyTestResult(false)
-                                            setSelectedBaseURL(val)
-                                            if (val !== "custom") {
-                                                sc.setBaseURL(val)
-                                            } else {
-                                                sc.setBaseURL(customBaseURL)
-                                            }
-                                        }}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select base URL" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white">
-                                            {predefinedBaseURLs.map((item) => (
-                                                <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-
-                                    {selectedBaseURL === "custom" && (
-                                        <Input
-                                            placeholder="Enter custom base URL"
-                                            value={customBaseURL}
-                                            onChange={(e) => {
-                                                const val = e.target.value
-                                                setCustomBaseURL(val)
-                                                sc.setBaseURL(val)
-                                                setKeyTestMessage("Please test your key")
-                                            }}
-                                        />
-                                    )}
-                                </div>
-
-                                <div className="grid gap-1">
-                                    <Label htmlFor="api-key">API-Key</Label>
-                                    <div className="flex gap-4 items-center">
-
-                                        <Input
-                                        value={sc.openaiAPIKey || ""}
-                                        type={keyVisible ? "text" : "password"}
-                                        id="api-key"
-                                        onChange={(e) => {
-                                            sc.setOpenaiAPIKey(e.target.value);
-                                        }}
-                                        />
-
-                                        {keyVisible
-                                            ? <EyeOffIcon onClick={() => setKeyVisible(false)} className="cursor-pointer" />
-                                            : <EyeIcon onClick={() => setKeyVisible(true)} className="cursor-pointer" />
-                                        }
+                                {!apiConfigAdvanced && (
+                                    <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
+                                        <p className="font-medium text-gray-900">Default configuration summary</p>
+                                        <p><span className="text-gray-500">Provider:</span> OpenAI (default)</p>
+                                        <p><span className="text-gray-500">Base URL:</span> {OPENAI_DEFAULT_BASE_URL}</p>
+                                        <p><span className="text-gray-500">API Key source:</span> Secure backend default config var</p>
+                                        <p><span className="text-gray-500">Advanced provider settings:</span> Disabled</p>
+                                        <p><span className="text-gray-500">Speech/Voice storage keys:</span> Managed by backend defaults</p>
                                     </div>
-                                </div>
+                                )}
 
                                 {apiConfigAdvanced && (
                                     <>
+                                        <div className="flex flex-col gap-1">
+                                            <Label htmlFor="base-url">Provider</Label>
+                                            <Select
+                                                value={selectedBaseURL}
+                                                onValueChange={(val) => {
+                                                    setKeyTestMessage("Please test your key")
+                                                    setKeyTestResult(false)
+                                                    setSelectedBaseURL(val)
+                                                    if (val !== "custom") {
+                                                        sc.setBaseURL(val)
+                                                    } else {
+                                                        sc.setBaseURL(customBaseURL)
+                                                    }
+                                                }}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select base URL" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    {predefinedBaseURLs.map((item) => (
+                                                        <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+
+                                            {selectedBaseURL === "custom" && (
+                                                <Input
+                                                    placeholder="Enter custom base URL"
+                                                    value={customBaseURL}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value
+                                                        setCustomBaseURL(val)
+                                                        sc.setBaseURL(val)
+                                                        setKeyTestMessage("Please test your key")
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
+
+                                        <div className="grid gap-1">
+                                            <Label htmlFor="api-key">API-Key</Label>
+                                            <div className="flex gap-4 items-center">
+                                                <Input
+                                                    value={sc.openaiAPIKey || ""}
+                                                    type={keyVisible ? "text" : "password"}
+                                                    id="api-key"
+                                                    onChange={(e) => {
+                                                        sc.setOpenaiAPIKey(e.target.value);
+                                                    }}
+                                                />
+
+                                                {keyVisible
+                                                    ? <EyeOffIcon onClick={() => setKeyVisible(false)} className="cursor-pointer" />
+                                                    : <EyeIcon onClick={() => setKeyVisible(true)} className="cursor-pointer" />
+                                                }
+                                            </div>
+                                        </div>
+
                                         <div className="grid gap-1">
                                             <Label htmlFor="select-stt-provider">Speech-to-Text Provider</Label>
                                             <Select
@@ -1082,7 +1114,7 @@ export default function Dashboard() {
                         <Button
                         variant="default"
                         className="h-12 w-72 bg-blue-600 hover:bg-blue-700"
-                        disabled={!startable || isCreatingProject || (!!sc.openaiAPIKey?.trim() && !keyTestResult)}
+                        disabled={!startable || isCreatingProject || (apiConfigAdvanced && !keyTestResult)}
                         onClick={() => createProject()}
                         >
                         {isCreatingProject ? (
