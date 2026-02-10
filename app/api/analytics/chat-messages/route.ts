@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get("authorization");
     const { session_id, projectSlug } = await request.json();
     
     if (!session_id || !projectSlug) {
@@ -26,7 +27,10 @@ export async function POST(request: NextRequest) {
     
     const response = await fetch(`${api_url}/interview/all_chat_messages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
       body: JSON.stringify(payload),
     });
 

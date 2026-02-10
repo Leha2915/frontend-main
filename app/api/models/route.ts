@@ -11,9 +11,13 @@ export async function POST(request: NextRequest) {
   const backendUrl = process.env.NEXT_PUBLIC_API_URL
 
   try {
+    const authHeader = request.headers.get("authorization")
     const res = await fetch(`${backendUrl}/models`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
       body: JSON.stringify({
         OPENAI_API_KEY,
         base_url,

@@ -53,11 +53,14 @@ export async function POST(request: NextRequest) {
   console.log("Using backend URL:", backendUrl);
 
   try {
+    const authHeader = request.headers.get("authorization");
     const backendRes = await fetch(`${backendUrl}/interview/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
       body: JSON.stringify(backendPayload),
-      credentials: 'include'
     })
 
     const data = await backendRes.json()
