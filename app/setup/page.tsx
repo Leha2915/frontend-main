@@ -29,6 +29,7 @@ type ChangeEvent = React.ChangeEvent<HTMLTextAreaElement>
 
 const api_url = process.env.NEXT_PUBLIC_API_URL;
 const OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1";
+const DEFAULT_MODEL = "gpt-4o";
 
 
 export default function Dashboard() {
@@ -109,7 +110,7 @@ export default function Dashboard() {
 
 
     const DEFAULT_PREF: (string | RegExp)[] = [
-        "gpt-4o",
+        DEFAULT_MODEL,
         "gpt-oss20B",
         "gpt-oss-120B",
         /claude.*sonnet/i,
@@ -151,6 +152,8 @@ export default function Dashboard() {
         const findByPattern = (p: string | RegExp) => {
             if (p instanceof RegExp) return models.find(m => p.test(m));
             const needle = p.toLowerCase();
+            const exact = models.find(m => m.toLowerCase() === needle);
+            if (exact) return exact;
             return models.find(m => m.toLowerCase().includes(needle));
         };
 
@@ -325,7 +328,7 @@ export default function Dashboard() {
             stimuli: sc.stimuli,
             n_stimuli: sc.n_stimuli,
             api_key: apiConfigAdvanced ? sc.openaiAPIKey : "",
-            model: sc.model,
+            model: apiConfigAdvanced ? sc.model : DEFAULT_MODEL,
             base_url: apiConfigAdvanced ? sc.baseURL : OPENAI_DEFAULT_BASE_URL,
             n_values_max: sc.n_values_max,
             min_nodes: minNodes,
@@ -542,7 +545,7 @@ export default function Dashboard() {
                                             <p className="font-medium text-gray-900">Default configuration summary</p>
                                             <p><span className="text-gray-500">LLM provider:</span> OpenAI (default)</p>
                                             <p><span className="text-gray-500">LLM base URL:</span> {OPENAI_DEFAULT_BASE_URL}</p>
-                                            <p><span className="text-gray-500">Model:</span> {sc.model || "gpt-4o (default)"}</p>
+                                            <p><span className="text-gray-500">Model:</span> {DEFAULT_MODEL} (default)</p>
                                             <p><span className="text-gray-500">Speech-to-Text provider:</span> Microsoft Azure</p>
                                             {advancedVoiceEnabled && (
                                                 <p><span className="text-gray-500">Voice output provider:</span> ElevenLabs (if configured) with Browser TTS fallback</p>
