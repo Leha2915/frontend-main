@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import StatusIndicator from "@/components/ui/StatusIndicator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -41,6 +42,7 @@ export default function Dashboard() {
     const [keyVisible, setKeyVisible] = useState(false)
     const [KeyTestMessage, setKeyTestMessage] = useState("Please test your key")
     const [keyTestResult, setKeyTestResult] = useState(false)
+    const [apiConfigAdvanced, setApiConfigAdvanced] = useState(false)
 
     const [elevenlabsKeyVisible, setElevenlabsKeyVisible] = useState(false)
     const [elevenlabsKeyTestResult, setElevenlabsKeyTestResult] = useState(false)
@@ -173,7 +175,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         const fetchModels = async () => {
-            if (!sc.baseURL || !sc.openaiAPIKey) {
+            if (!sc.baseURL) {
                 console.warn("No models selectable")
                 return
             }
@@ -219,8 +221,8 @@ export default function Dashboard() {
     useEffect(() => {
     const key = sc.openaiAPIKey?.trim();
     if (!key) {
-        setKeyTestMessage("Please provide an API key");
-        setKeyTestResult(false);
+        setKeyTestMessage("No key entered - backend default is used if configured");
+        setKeyTestResult(true);
         return;
     }
 
@@ -494,6 +496,21 @@ export default function Dashboard() {
                         <Card className="border-gray-200">
                             <CardHeader className="pb-4">
                                 <CardDescription>Please enter your OpenAI Provider and API Key.</CardDescription>
+                                <div className="flex items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 mt-2">
+                                    <div className="text-sm">
+                                        <span className="font-medium">{apiConfigAdvanced ? "Advanced" : "Default"}</span>
+                                        <span className="text-gray-500 ml-2">mode</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={cn("text-xs", !apiConfigAdvanced ? "text-gray-900 font-medium" : "text-gray-500")}>Default</span>
+                                        <Switch
+                                            checked={apiConfigAdvanced}
+                                            onCheckedChange={setApiConfigAdvanced}
+                                            aria-label="Toggle advanced API configuration"
+                                        />
+                                        <span className={cn("text-xs", apiConfigAdvanced ? "text-gray-900 font-medium" : "text-gray-500")}>Advanced</span>
+                                    </div>
+                                </div>
                             </CardHeader>
 
                             <CardContent className="space-y-4">
@@ -555,6 +572,106 @@ export default function Dashboard() {
                                         }
                                     </div>
                                 </div>
+
+                                {apiConfigAdvanced && (
+                                    <>
+                                        <div className="grid gap-1">
+                                            <Label htmlFor="select-stt-provider">Speech-to-Text Provider</Label>
+                                            <Select
+                                                value={sttProvider}
+                                                onValueChange={(v) => {
+                                                    setSttProvider(v)
+                                                }}
+                                            >
+                                                <SelectTrigger id="select-stt-provider-option" className="items-start">
+                                                    <SelectValue placeholder="Select option" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    <SelectItem value="Microsoft Azure">Microsoft Azure</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {sttProvider === "Microsoft Azure" && (
+                                            <>
+                                                <div className="grid gap-1">
+                                                    <Label htmlFor="stt-endpoint">Azure STT Endpoint</Label>
+                                                    <Input
+                                                        value={sttEndpoint || ""}
+                                                        placeholder="https://germanywestcentral.api.cognitive.microsoft.com/"
+                                                        type="text"
+                                                        id="stt-endpoint"
+                                                        onChange={(e) => {
+                                                            setSttEndpoint(e.target.value);
+                                                        }}
+                                                    />
+                                                </div>
+
+                                                <div className="grid gap-1">
+                                                    <Label htmlFor="stt-key">Azure STT Key</Label>
+                                                    <div className="flex gap-4 items-center">
+                                                        <Input
+                                                            value={sttKey || ""}
+                                                            placeholder="Microsoft Azure Speech-to-Text Api Key"
+                                                            type={sttKeyVisible ? "text" : "password"}
+                                                            id="stt-key"
+                                                            onChange={(e) => {
+                                                                setSttKey(e.target.value);
+                                                            }}
+                                                        />
+                                                        {sttKeyVisible
+                                                            ? <EyeOffIcon onClick={() => setSttKeyVisible(false)} className="cursor-pointer" />
+                                                            : <EyeIcon onClick={() => setSttKeyVisible(true)} className="cursor-pointer" />
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        <div className="grid gap-1">
+                                            <Label htmlFor="elevenlabs-api-key">Elevenlabs Text-to-Speech API-Key</Label>
+                                            <div className="flex gap-4 items-center">
+                                                <Input
+                                                    value={elevenabsKey || ""}
+                                                    placeholder="Optional"
+                                                    type={elevenlabsKeyVisible ? "text" : "password"}
+                                                    id="elevenlabs-api-key"
+                                                    onChange={async (e) => {
+                                                        setElevenlabsKey(e.target.value);
+                                                        if (await testElevenLabsKeyForTTS(e.target.value, "EXAVITQu4vr4xnSDxMaL")) {
+                                                            setElevenlabsKeyTestResult(true)
+                                                        } else {
+                                                            setElevenlabsKeyTestResult(false)
+                                                        }
+                                                    }}
+                                                />
+
+                                                {elevenlabsKeyVisible
+                                                    ? <EyeOffIcon onClick={() => setElevenlabsKeyVisible(false)} className="cursor-pointer" />
+                                                    : <EyeIcon onClick={() => setElevenlabsKeyVisible(true)} className="cursor-pointer" />
+                                                }
+                                                {elevenlabsKeyTestResult ? <Check /> : <X />}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid gap-1">
+                                            <Label>Cloudflare R2 Account (optional - only if user voice should be saved)</Label>
+                                            <CloudflareR2Tester
+                                                apiPath={`${api_url}/cloudflare/test`}
+                                                initialAccountId={r2ID}
+                                                initialAccessKeyId={r2Key}
+                                                initialSecretAccessKey={r2Secret}
+                                                initialBucket={r2Bucket}
+                                                onValidatedChange={(r2) => {
+                                                    setr2ID(r2.accountId);
+                                                    setr2Key(r2.accessKeyId);
+                                                    setr2Secret(r2.secretAccessKey);
+                                                    setr2Bucket(r2.bucket);
+                                                }}
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </CardContent>
 
                             <CardFooter className="p-3 pt-2 flex justify-center">
@@ -566,6 +683,56 @@ export default function Dashboard() {
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">3</div>
+                            <h2 className="text-lg font-semibold text-gray-900">Stimuli Generation</h2>
+                        </div>
+
+                        <div className="border border-gray-200 bg-white rounded-lg p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-medium text-gray-900">Stimulus Collection</h3>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => mutcreateStimuli()}
+                                    disabled={!sc.model}
+                                >
+                                    {isPending ? (
+                                        <LoaderCircle className="animate-spin" />
+                                    ) : sc.model ? (
+                                        <span>Suggest Stimuli with {sc.model}</span>
+                                    ) : (
+                                        <span>No model selected</span>
+                                    )}
+                                </Button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {sc.stimuli.map((item, index) => (
+                                    <div className="space-y-2" key={index}>
+                                        <div className="flex justify-between items-center">
+                                            <Label>Stimulus {index + 1}</Label>
+                                            <Button className="justify-self-end" variant="destructive" size="sm" onClick={() => handleDeleteInput(index)}>
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </div>
+                                        <Textarea
+                                            onChange={(e) => {
+                                                handleChange(index, e)
+                                            }}
+                                            className="resize-none"
+                                            id={"" + (index + 1)}
+                                            placeholder="Enter Stimulus..."
+                                            value={item}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <Button variant="outline" onClick={handleAddInput} className="w-full">Add Stimulus</Button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">4</div>
                             <h2 className="text-lg font-semibold text-gray-900">Interview Configuration</h2>
                         </div>
                         
@@ -896,197 +1063,8 @@ export default function Dashboard() {
                                         </Select>
                                     </div>
 
-                                    {interviewMode != 2 &&
-                                    <div className="grid gap-1 col-span-full">
-                                        
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Label htmlFor="select-stt-provider" className="place-self-start">
-                                                Speech-to-Text Provider<Info className="size-4 inline-block ml-1" />
-                                                </Label>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="right" sideOffset={5}>
-                                                The endpoint used to extract text from user voice
-                                            </TooltipContent>
-                                        </Tooltip>
-
-                                        <Select
-                                        value={sttProvider}
-                                        onValueChange={(v) => {
-                                            setSttProvider(v)
-                                        }}
-                                        >
-                                        <SelectTrigger id="select-stt-provider-option" className="items-start">
-                                            <SelectValue placeholder="Select option" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white">
-                                            <SelectItem value="Microsoft Azure">Microsoft Azure</SelectItem>
-                                            { false &&
-                                            <SelectItem value="KIT Whisper">KIT Whisper</SelectItem>
-                                            }
-                                        </SelectContent>
-                                        </Select>
-
-                                        {sttProvider == "Microsoft Azure" &&
-                                            <div className="grid gap-1 col-span-full">
-
-                                                <div className="flex gap-4 items-center">
-                                                    
-                                                    <Input
-                                                    value={sttEndpoint || ""}
-                                                    placeholder="https://germanywestcentral.api.cognitive.microsoft.com/"
-                                                    type={"text"}
-                                                    id="stt-endpoint"
-                                                    onChange={async (e) => {
-                                                        setSttEndpoint(e.target.value);
-                                                    }}
-                                                    />
-
-                                                </div>
-
-                                            </div>
-                                        }
-                                    
-                                        {sttProvider == "Microsoft Azure" &&
-                                            <div className="grid gap-1 col-span-full">
-                                                <div className="flex gap-4 items-center">
-                                                    
-
-                                                    <Input
-                                                    value={sttKey || ""}
-                                                    placeholder="Microsoft Azure Speech-to-Text Api Key"
-                                                    type={sttKeyVisible ? "text" : "password"}
-                                                    id="stt-key"
-                                                    onChange={async (e) => {
-                                                        setSttKey(e.target.value);
-                                                    }}
-                                                    />
-
-                                                    {sttKeyVisible
-                                                        ? <EyeOffIcon onClick={() => setSttKeyVisible(false)} className="cursor-pointer" />
-                                                        : <EyeIcon onClick={() => setSttKeyVisible(true)} className="cursor-pointer" />
-                                                    }
-
-                                                </div>
-                                            
-                                
-                                            </div>
-                                        }
-                                        
-
-                                    
-
-
-                                    </div>
-                                    }
-
-
-
-
-                                    {interviewMode != 2 &&
-                                    <div className="grid gap-1 col-span-full">
-
-                                        <Label htmlFor="elevenlabs-api-key">Elevenlabs Text-to-Speech API-Key</Label>
-                                        <div className="flex gap-4 items-center">
-                                            
-
-                                            <Input
-                                            value={elevenabsKey || ""}
-                                            placeholder="(If no key or an invalid one is provided, the browser tts will answer)"
-                                            type={elevenlabsKeyVisible ? "text" : "password"}
-                                            id="elevenlabs-api-key"
-                                            onChange={async (e) => {
-                                                setElevenlabsKey(e.target.value);
-                                                if (await testElevenLabsKeyForTTS(e.target.value, "EXAVITQu4vr4xnSDxMaL")) {
-                                                    setElevenlabsKeyTestResult(true)
-                                                } else {
-                                                    setElevenlabsKeyTestResult(false)
-                                                }
-                                                
-                                            }}
-                                            />
-
-                                            {elevenlabsKeyVisible
-                                                ? <EyeOffIcon onClick={() => setElevenlabsKeyVisible(false)} className="cursor-pointer" />
-                                                : <EyeIcon onClick={() => setElevenlabsKeyVisible(true)} className="cursor-pointer" />
-                                            }
-                                            {elevenlabsKeyTestResult ? <Check/> : <X/>}
-                                        </div>
-
-                        
-                                    </div>
-                                    }
-
-
-
-
-                                    {interviewMode != 2 && (
-                                    <div className="grid gap-1 col-span-full">
-                                        <Label>Cloudflare R2 Account (optional - only if user voice should be saved)</Label>
-
-                                        <CloudflareR2Tester
-                                        apiPath={`${api_url}/cloudflare/test`}
-                                        initialAccountId={r2ID}
-                                        initialAccessKeyId={r2Key}
-                                        initialSecretAccessKey={r2Secret}
-                                        initialBucket={r2Bucket}
-                                        onValidatedChange={(r2) => {
-                                            setr2ID(r2.accountId);
-                                            setr2Key(r2.accessKeyId);
-                                            setr2Secret(r2.secretAccessKey);
-                                            setr2Bucket(r2.bucket);
-                                        }}
-                                        />
-                                    </div>
-                                    )}
-
-
                                     </div>
 
-
-                                    <div className="border border-gray-200 bg-white rounded-lg p-4 space-y-4">
-                                        <div className="flex items-center justify-between">
-                                        <h3 className="font-medium text-gray-900">Stimulus Collection</h3>
-                                        <Button
-                                            className=""
-                                            variant="outline"
-                                            onClick={() => mutcreateStimuli()}
-                                            disabled={!sc.model}
-                                        >
-                                            {isPending ? (
-                                            <LoaderCircle className="animate-spin" />
-                                            ) : sc.model ? (
-                                            <span>Suggest Stimuli with {sc.model}</span>
-                                            ) : (
-                                            <span>No model selected</span>
-                                            )}
-                                        </Button>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            {sc.stimuli.map((item, index) => (
-                                                <div className="space-y-2" key={index}>
-                                                    <div className="flex justify-between items-center">
-                                                        <Label>Stimulus {index + 1}</Label>
-                                                        <Button className="justify-self-end" variant="destructive" size="sm" onClick={() => handleDeleteInput(index)}>
-                                                            <Trash2 className="size-4" />
-                                                        </Button>
-                                                    </div>
-                                                    <Textarea
-                                                        onChange={(e) => {
-                                                            handleChange(index, e)
-                                                        }}
-                                                        className="resize-none"
-                                                        id={"" + (index + 1)}
-                                                        placeholder="Enter Stimulus..."
-                                                        value={item}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <Button variant="outline" onClick={handleAddInput} className="w-full">Add Stimulus</Button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1104,7 +1082,7 @@ export default function Dashboard() {
                         <Button
                         variant="default"
                         className="h-12 w-72 bg-blue-600 hover:bg-blue-700"
-                        disabled={!startable || isCreatingProject || !keyTestResult}
+                        disabled={!startable || isCreatingProject || (!!sc.openaiAPIKey?.trim() && !keyTestResult)}
                         onClick={() => createProject()}
                         >
                         {isCreatingProject ? (

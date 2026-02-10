@@ -5,9 +5,7 @@ export function checkConfig(sc: Settings & { keyTestResult?: boolean, availableM
   const missing: string[] = [];
 
   const hasKey = !!sc.openaiAPIKey?.trim();
-  if (!hasKey) {
-    missing.push("API key");
-  } else if (!sc.keyTestResult) {
+  if (hasKey && !sc.keyTestResult) {
     missing.push("valid API key");
   }
 
