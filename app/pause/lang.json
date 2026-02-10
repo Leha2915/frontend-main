@@ -1,0 +1,22 @@
+{
+  "en": {
+    "InterviewPausedPage": {
+      "title": "Interview paused",
+      "desc": "It seems like you closed the tab or timed out. You can resume the interview or end it now.",
+      "resume": "Resume Interview",
+      "restart": "Restart Interview",
+      "end": "End Interview",
+      "loading": "Loading…"
+    }
+  },
+  "de": {
+    "InterviewPausedPage": {
+      "title": "Interview pausiert",
+      "desc": "Es scheint, als hättest du den Tab geschlossen oder die Sitzung ist abgelaufen. Du kannst das Interview fortsetzen oder beenden.",
+      "resume": "Interview fortsetzen",
+      "restart": "Interview neu starten",
+      "end": "Interview beenden",
+      "loading": "Laden…"
+    }
+  }
+}

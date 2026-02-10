@@ -1,0 +1,36 @@
+{
+  "en": {
+    "ChatPage": {
+      "auto_hello": "Let us start!",
+      "chat_not_found_title": "Chat not found",
+      "chat_not_found_body": "Please select a valid chat topic from the tabs to the left.",
+      "discussion_label": "Discussion:",
+      "counter": "{current} of {total}",
+      "topics_label": "Topics",
+      "connecting": "Connecting to agent...",
+      "error_sending": "Error sending message: {error}",
+      "values_target_reached": "Values Target Reached! You have successfully identified {count}{ofMax} core values. This provides comprehensive insights into what matters most to you.\n\n{next}",
+      "of_max": " out of {max}",
+      "next_has_more": "Continue with the next orange [topic] on the left or press [Enter] to go directly to the next chat.",
+      "next_none_left": "All [topic]s completed! Press [Enter] to finish the interview.",
+      "chat_finished_msg": "This chat is now finished.\n\n{next}"
+    }
+  },
+  "de": {
+    "ChatPage": {
+      "auto_hello": "Lass uns beginnen!",
+      "chat_not_found_title": "Chat nicht gefunden",
+      "chat_not_found_body": "Bitte wähle links einen gültigen Chat-Themenbereich aus.",
+      "discussion_label": "Gespräch:",
+      "counter": "{current} von {total}",
+      "topics_label": "Themen",
+      "connecting": "Verbindung zum Agenten wird hergestellt...",
+      "error_sending": "Fehler beim Senden der Nachricht: {error}",
+      "values_target_reached": "Werte-Ziel erreicht! Du hast erfolgreich {count}{ofMax} Kernwerte identifiziert. Das liefert umfassende Einblicke in das, was dir am wichtigsten ist.\n\n{next}",
+      "of_max": " von {max}",
+      "next_has_more": "Mach mit dem nächsten orange markierten [Thema] links weiter oder drücke [Enter], um direkt zum nächsten Chat zu springen.",
+      "next_none_left": "Alle [Themen] abgeschlossen! Drücke [Enter], um das Interview zu beenden.",
+      "chat_finished_msg": "Dieser Chat ist jetzt beendet.\n\n{next}"
+    }
+  }
+}

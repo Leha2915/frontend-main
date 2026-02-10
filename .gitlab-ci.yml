@@ -1,0 +1,78 @@
+#───────────────────────────────────────────────────────────────────────────────
+# .gitlab-ci.yml  ──  Ladderchat (Next.js)  •  Build → Package (Kaniko)
+#───────────────────────────────────────────────────────────────────────────────
+# REQUIRED CI/CD VARIABLES (GitLab → Settings → CI/CD → Variables)
+# HARBOR_URL, HARBOR_PROJECT, HARBOR_USERNAME, HARBOR_PASSWORD
+# (Kubernetes variables live elsewhere if you deploy in another pipeline file)
+#───────────────────────────────────────────────────────────────────────────────
+
+variables:
+  NODE_IMAGE: node
+  NODE_VERSION: 18-alpine
+  KANIKO_VERSION: v1.23.2
+  DOCKERFILE_PATH: ${CI_PROJECT_DIR}/Dockerfile
+
+  # assembled later → ${IMAGE_REGISTRY}:${TAG}
+  IMAGE_REGISTRY: ${HARBOR_URL}/${HARBOR_PROJECT}
+
+  # GitLab performance knobs
+  FF_USE_FASTZIP: "true"
+  CACHE_COMPRESSION_LEVEL: "fastest"
+
+stages:
+  - build
+  - package
+
+#────────────────────────────────────── build ──────────────────────────────────
+build:
+  stage: build
+  image: ${NODE_IMAGE}:${NODE_VERSION}
+  script:
+    - echo "📦 Installing dependencies…"
+    - npm ci
+    - echo "🏗️  Building Next.js project…"
+    - npm run build
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-node-modules
+    paths:
+      - node_modules/
+  rules:
+    - if: '$CI_COMMIT_TAG == null'   # run on branches / MRs, skip on tags
+
+#──────────────────────────────────── package ──────────────────────────────────
+harbor:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:${KANIKO_VERSION}-debug
+    entrypoint: [""]
+  script:
+    # 1️⃣  Auth for Harbor
+    - mkdir -p /kaniko/.docker
+    - |
+      echo '{"auths":{"'${HARBOR_URL}'":{"auth":"'$(printf "%s:%s" "${HARBOR_USERNAME}" "${HARBOR_PASSWORD}" | base64 | tr -d '\n')'"}}}' \
+        > /kaniko/.docker/config.json
+
+    # 2️⃣  Determine tag
+    - |
+      if [[ -n "$CI_COMMIT_TAG" ]]; then
+        TAG="$CI_COMMIT_TAG"
+      else
+        TAG="$CI_COMMIT_SHORT_SHA"
+      fi
+      IMAGE_REF="${IMAGE_REGISTRY}:${TAG}"
+      echo "🚀 Final image reference: ${IMAGE_REF}"
+
+    # 3️⃣  Kaniko build & push
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${DOCKERFILE_PATH}" \
+        --destination "${IMAGE_REF}" \
+        --cache=true \
+        --cache-ttl=168h \
+        --cache-copy-layers=true \
+        --build-arg NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+        --build-arg NODE_ENV=production
+  rules:
+    - if: '$CI_COMMIT_TAG'                 # run on tags
+    - if: '$CI_COMMIT_BRANCH == "main"'    # …or on main branch

@@ -1,0 +1,20 @@
+{
+  "en": {
+    "Ranking": {
+      "study_topic_title": "Study Topic",
+      "about_title": "About this Study",
+      "todo_title": "What to do now",
+      "todo_body": "Please rank the stimuli according to their relevance for you. You can drag and drop or use the up/down buttons to reorder them. We will ask questions for your top {n} ranked stimuli.",
+      "submit_button": "Submit Ranking & Continue"
+    }
+  },
+  "de": {
+    "Ranking": {
+      "study_topic_title": "Studienthema",
+      "about_title": "Über diese Studie",
+      "todo_title": "Was ist jetzt zu tun?",
+      "todo_body": "Bitte ordne die Stimuli nach ihrer Relevanz für dich. Du kannst per Drag & Drop oder über die Hoch/Runter-Buttons umsortieren. Wir stellen Fragen zu deinen Top-{n} Stimuli.",
+      "submit_button": "Ranking absenden & fortfahren"
+    }
+  }
+}

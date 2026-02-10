@@ -1,0 +1,20 @@
+{
+  "en": {
+    "OnboardingPopup": {
+      "title": "Hello!",
+      "description": "We prepared a tutorial for you to quickly show you how to interact with the agent.",
+      "start_btn": "Start tutorial",
+      "close_aria": "Close",
+      "close_title": "Close"
+    }
+  },
+  "de": {
+    "OnboardingPopup": {
+      "title": "Hallo!",
+      "description": "Wir haben ein kurzes Tutorial vorbereitet, das dir zeigt, wie du mit dem Agenten interagierst.",
+      "start_btn": "Tutorial starten",
+      "close_aria": "Schließen",
+      "close_title": "Schließen"
+    }
+  }
+}

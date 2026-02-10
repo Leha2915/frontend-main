@@ -1,0 +1,1131 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import StatusIndicator from "@/components/ui/StatusIndicator";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProgressContext } from "@/context/progress";
+import { SettingsContext } from "@/context/settings";
+import { checkConfig } from "@/lib/checkConfig";
+import { StimuliPromptAnswer } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { stimuliCreationPrompt } from "@/prompts/stimuli-creation";
+import { useMutation } from "@tanstack/react-query";
+import { Bird, ChevronRightIcon, Info, LoaderCircle, LockIcon, Rabbit, Trash2, Turtle, UploadIcon, EyeIcon, EyeOffIcon, Check, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChatCompletion } from "openai/resources";
+import React, { useContext, useEffect, useState, useLayoutEffect, useRef, useCallback } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import RequireAuthLevel from "@/components/RequireAuthLevel";
+import { useJWTAuth } from "@/context/jwtAuth";
+import CloudflareR2Tester from "@/components/CloudFlareTester";
+
+type ButtonEvent = React.MouseEvent<HTMLButtonElement>
+type ChangeEvent = React.ChangeEvent<HTMLTextAreaElement>
+
+const api_url = process.env.NEXT_PUBLIC_API_URL;
+
+
+export default function Dashboard() {
+    const { fetchWithAuth } = useJWTAuth();
+
+    const router = useRouter()
+
+    const sc = useContext(SettingsContext);
+    const pc = useContext(ProgressContext)
+
+
+    const [keyVisible, setKeyVisible] = useState(false)
+    const [KeyTestMessage, setKeyTestMessage] = useState("Please test your key")
+    const [keyTestResult, setKeyTestResult] = useState(false)
+
+    const [elevenlabsKeyVisible, setElevenlabsKeyVisible] = useState(false)
+    const [elevenlabsKeyTestResult, setElevenlabsKeyTestResult] = useState(false)
+    const [elevenabsKey, setElevenlabsKey] = useState("")
+
+    const [sttProvider, setSttProvider] = useState("Microsoft Azure")
+    const [sttKey, setSttKey] = useState("")
+    const [sttKeyVisible, setSttKeyVisible] = useState(false)
+
+    const [sttEndpoint, setSttEndpoint] = useState("https://germanywestcentral.api.cognitive.microsoft.com/")
+
+    const [r2ID, setr2ID] = useState("")
+    const [r2Key, setr2Key] = useState("")
+    const [r2Secret, setr2Secret] = useState("")
+    const [r2Bucket, setr2Bucket] = useState("")
+
+    const [internalId, setInternalId] = useState("")
+    const [idCount, setIdCount] = useState(internalId.length || 0)
+
+    const [availableModels, setAvailableModels] = useState<string[]>([])
+    const [isLoadingModels, setIsLoadingModels] = useState(false)
+    const [modelLoadError, setModelLoadError] = useState<string | null>(null)
+
+    const [startable, setStartable] = useState(checkConfig({ ...sc, keyTestResult, availableModels }).startable)
+    const [err_message, setErr_message] = useState(checkConfig({ ...sc, keyTestResult, availableModels }).message)
+
+
+    const predefinedBaseURLs = [
+        { label: "OpenAI (default)", value: "https://api.openai.com/v1" },
+        { label: "Groq (fastest)", value: "https://api.groq.com/openai/v1"},
+        { label: "vLLM Universität Göttingen", value: "https://chat-ai.academiccloud.de/v1"},
+        { label: "Anthropic Claude", value: "https://api.anthropic.com/v1"},
+        { label: "Custom", value: "custom" }
+    ]
+
+    const [customBaseURL, setCustomBaseURL] = useState(sc.baseURL || "")
+    const [selectedBaseURL, setSelectedBaseURL] = useState(() => {
+        // Initialwert: ist baseURL in Liste? Wenn ja → Wert, sonst "custom"
+        const known = predefinedBaseURLs.find(p => p.value === sc.baseURL)
+        return known ? known.value : "custom"
+    })
+
+    const [descriptionCount, setDescriptionCount] = useState(sc.description?.length || 0)
+    const [topicCount, setTopicCount] = useState(sc.topic?.length || 0)
+
+
+    const [voiceEnabled, setVoiceEnabled] = useState(true);
+    const [advancedVoiceEnabled, setAdvancedVoiceEnabled] = useState(false);
+    const [treeEnabled, setTreeEnabled] = useState(false);
+    const [interviewMode, setInterviewMode] = useState(1);
+    const [maxRetries, setMaxRetries] = useState(3);
+
+    const [language, setLanguage] = useState("en");
+
+    const [timeLimit, setTimeLimit] = useState(-1);
+
+    const [minNodes, setMinNodes] = useState(0);
+
+    const [autoSend, setAutoSend] = useState(false);
+
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+
+    const DEFAULT_PREF: (string | RegExp)[] = [
+        "gpt-oss20B",
+        "gpt-oss-120B",
+        "gpt-4o",
+        /claude.*sonnet/i,
+        /llama.*instruct/i,
+        /mistral.*large/i,
+        /mixtral.*instruct/i,
+        /mistral.*instruct/i,
+        "qwq-32b"
+    ];
+
+
+    async function testElevenLabsKeyForTTS(key:string, voiceId:string): Promise<boolean> {
+        try {
+        const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
+            method: "POST",
+            headers: {
+                "xi-api-key": key,
+                "Content-Type": "application/json",
+                "Accept": "audio/mpeg"
+            },
+            body: JSON.stringify({
+            text: "",
+            model_id: "eleven_turbo_v2"
+            }),
+        });
+
+        if (!res.ok) return false;
+        return true;
+        } catch (err) {
+        return false;
+        }
+    }
+
+    function pickDefaultModel(models: string[]): string {
+        if (!models || models.length === 0) return "";
+
+        let pref = DEFAULT_PREF;
+
+        const findByPattern = (p: string | RegExp) => {
+            if (p instanceof RegExp) return models.find(m => p.test(m));
+            const needle = p.toLowerCase();
+            return models.find(m => m.toLowerCase().includes(needle));
+        };
+
+        for (const p of pref) {
+            const hit = findByPattern(p);
+            if (hit) return hit;
+        }
+
+        return models[0];
+        }
+
+    useEffect(() => {
+        sc.setTopic("")
+        sc.setDescription("")
+        sc.setStimuli(["", "", ""])
+        setTopicCount(0)
+        setDescriptionCount(0)
+    }, [])
+
+    useEffect(() => {
+        setStartable(checkConfig({ ...sc, keyTestResult, availableModels }).startable)
+        setErr_message(checkConfig({ ...sc, keyTestResult, availableModels }).message)
+    })
+
+    useEffect(() => {
+        const fetchModels = async () => {
+            if (!sc.baseURL || !sc.openaiAPIKey) {
+                console.warn("No models selectable")
+                return
+            }
+
+            setIsLoadingModels(true)
+            setModelLoadError(null)
+
+            try {
+                const res = await fetch('/api/models', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        base_url: sc.baseURL,
+                        OPENAI_API_KEY: sc.openaiAPIKey,
+                    }),
+                })
+
+                if (!res.ok) throw new Error(`Status ${res.status}`)
+                const data: string[] = await res.json()
+                if (Array.isArray(data) && data.length > 0) {
+                    setAvailableModels(data)
+                    sc.setModel(pickDefaultModel(data))
+                } else {
+                    console.warn("No models returned from backend")
+                    setAvailableModels([])
+                    sc.setModel("")
+                }
+            } catch (err) {
+                console.error("Loading error:", err)
+                setModelLoadError("Could not load models.")
+                setAvailableModels([])
+                sc.setModel("")
+            } finally {
+                setIsLoadingModels(false)
+            }
+        }
+
+        fetchModels()
+    }, [sc.baseURL, sc.openaiAPIKey])
+
+    useEffect(() => {
+    const key = sc.openaiAPIKey?.trim();
+    if (!key) {
+        setKeyTestMessage("Please provide an API key");
+        setKeyTestResult(false);
+        return;
+    }
+
+    setKeyTestMessage("Testing API key...");
+    setKeyTestResult(false);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+        testAPIKey();
+    }, 500);
+
+    return () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    }, [sc.openaiAPIKey, sc.baseURL]);
+
+
+    const handleAddInput = () => {
+        sc.setStimuli([...sc.stimuli, ""])
+
+    };
+
+    const handleChange = (index: number, e: ChangeEvent) => {
+        let NewArr = [...sc.stimuli]
+        NewArr[index] = e.target.value
+        sc.setStimuli(NewArr)
+    }
+
+    const handleDeleteInput = (index: number) => {
+        let NewArr = [...sc.stimuli]
+        NewArr.splice(index, 1)
+        sc.setStimuli(NewArr)
+
+    };
+
+    const { mutate: testAPIKey, isPending: isTestingKey } = useMutation({
+        // Key zur Identifizierung von Mutation
+        mutationKey: ['testAPIKey'],
+        // include message to later use it in onMutate
+        mutationFn: async () => {
+            const response = await fetch(`${api_url}/testOpenaiAPIKey`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+
+                body: JSON.stringify({
+                    OPENAI_API_KEY: sc.openaiAPIKey,
+                    base_url: sc.baseURL || "https://api.openai.com/v1"
+                }),
+            })
+            return response
+        },
+
+        onSuccess: async (data) => {
+            
+            const response = await data.json()
+
+            if (response.ok === true) {
+                setKeyTestMessage("API key is valid")
+                setKeyTestResult(true)
+            } else {
+                setKeyTestMessage(response.reason)
+                setKeyTestResult(false)
+            }
+        }
+    })
+
+    const { mutate: createProject, isPending: isCreatingProject } = useMutation({
+    mutationKey: ['createProject'],
+    mutationFn: async () => {
+
+        const response = await fetchWithAuth(`${api_url}/projects`, {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json",
+        },
+            credentials: 'include',
+        body: JSON.stringify({
+            topic: sc.topic,
+            description: sc.description,
+            stimuli: sc.stimuli,
+            n_stimuli: sc.n_stimuli,
+            api_key: sc.openaiAPIKey,
+            model: sc.model,
+            base_url: sc.baseURL,
+            n_values_max: sc.n_values_max,
+            min_nodes: minNodes,
+            voice_enabled: voiceEnabled,
+            tree_enabled: treeEnabled,
+            advanced_voice_enabled: advancedVoiceEnabled,
+            interview_mode: interviewMode,
+            elevenlabs_api_key: elevenabsKey,
+            max_retries: maxRetries,
+            auto_send: autoSend,
+            time_limit: timeLimit,
+
+            r2_account_id: r2ID,
+            r2_access_key_id: r2Key,
+            r2_secret_access_key: r2Secret,
+            r2_bucket: r2Bucket, 
+            
+            language: language,
+
+            internal_id: internalId,
+
+            stt_key: sttKey,
+            stt_endpoint: sttEndpoint,
+        }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Unable to create project.");
+        }
+
+        return await response.json();
+    },
+    onSuccess: (project) => {
+        router.push(`/project`);
+    },
+    onError: () => {
+        alert("Error while creating new project.");
+    }
+    });
+
+
+    const { mutate: mutcreateStimuli, isPending } = useMutation({
+        // Key zur Identifizierung von Mutation
+        mutationKey: ['createStimuli'],
+        // include message to later use it in onMutate
+        mutationFn: async () => {
+            const response = await fetch('/api/stimuli', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    role_prompt: stimuliCreationPrompt(sc.stimuli.length, sc.n_stimuli, sc.topic),
+                    model: sc.model,
+                    OPENAI_API_KEY: sc.openaiAPIKey,
+                    base_url: sc.baseURL
+                }),
+            })
+            return response
+        },
+
+        onSuccess: (data) => {
+            if (data.status === 200) {
+                data.json().then((response) => {
+                    const answer = response as ChatCompletion
+                    const Stimuli = JSON.parse(answer.choices[0].message.content.replace(/```json\n?/, "").replace(/```$/, "")) as StimuliPromptAnswer
+                    
+                    // Doppelpunkte aus den Stimuli entfernen falls vorhanden
+                    const NewArr: string[] = sc.stimuli.map<string>((value, index) => 
+                        Stimuli.stimuli[index][0].replace(/:\s*$/, '')) 
+                    
+                    sc.setStimuli(NewArr)
+                })
+            }
+        }
+    })
+
+    useEffect(() => {
+        if (availableModels.length > 0 && !availableModels.includes(sc.model)) {
+            sc.setModel(pickDefaultModel(availableModels));
+        }
+    }, [availableModels, sc.model]);
+
+
+    const downloadSettingsConfig = () => {
+        const element = document.createElement("a");
+        const file = new Blob([JSON.stringify(sc, null, 2),], { type: 'application/json' });
+        element.href = URL.createObjectURL(file);
+        element.download = "LadderChat_Config_Data.json";
+        document.body.appendChild(element); // Required for this to work in FireFox
+        element.click();
+    }
+
+
+    return (
+
+      <RequireAuthLevel>
+        <div className="flex flex-col h-full bg-white">
+
+            <div className="flex-1 overflow-y-auto">
+                <div className="max-w-4xl mx-auto p-6 space-y-8">
+                    
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">1</div>
+                            <h2 className="text-lg font-semibold text-gray-900">Basic Project Information</h2>
+                        </div>
+                        
+                        <div className="flex gap-6">
+
+
+                <div className="flex-1 space-y-2">
+                    <Label htmlFor="laddering_topic">Topic</Label>
+                    <Textarea
+                    id="laddering_topic"
+                    placeholder="The topic of the interview project"
+                    style={{
+                        width: "45ch",
+                        height: "100px",
+                        resize: "none",
+                    }}
+                    maxLength={70}
+                    onChange={(e) => {
+                        sc.setTopic(e.target.value);
+                        setTopicCount(e.target.value.length);
+                    }}
+                    />
+                    <p className="text-sm text-muted-foreground text-right">{topicCount}/70</p>
+                </div>
+
+                <div className="grid gap-3">
+                    <Label htmlFor="project-description">Project Description</Label>
+                    <Textarea
+                        id="project-description"
+                        placeholder="(This will be seen by the interviewees)"
+                                style={{
+                                    width: "45ch",
+                                    height: "100px",
+                                    resize: "none",
+                                }}
+                        maxLength={700}
+                        onChange={(e) => {
+                            sc.setDescription(e.target.value)
+                            setDescriptionCount(e.target.value.length)
+                        }}
+                    />
+                    <p className="text-sm text-muted-foreground text-right">{descriptionCount}/700</p>
+                </div>
+
+
+
+                </div>
+
+                    </div>
+
+
+                <div className="grid gap-3">
+                    <div>
+                    <Label htmlFor="internal-id">Internal Id</Label>
+                    <Textarea
+                        id="internal-id"
+                        placeholder="(Not seen by interviewees)"
+                                style={{
+                                    width: "45ch",
+                                    height: "100px",
+                                    resize: "none",
+                                }}
+                        maxLength={200}
+                        onChange={(e) => {
+                            setInternalId(e.target.value)
+                            setIdCount(e.target.value.length)
+                        }}
+                    />
+                    <p className="text-sm text-muted-foreground text-center">{idCount}/200</p>
+                    </div>
+                </div>
+
+                    
+
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">2</div>
+                            <h2 className="text-lg font-semibold text-gray-900">API Configuration</h2>
+                        </div>
+                        
+                        <Card className="border-gray-200">
+                            <CardHeader className="pb-4">
+                                <CardDescription>Please enter your OpenAI Provider and API Key.</CardDescription>
+                            </CardHeader>
+
+                            <CardContent className="space-y-4">
+                                <div className="flex flex-col gap-1">
+                                    <Label htmlFor="base-url">Provider</Label>
+                                    <Select
+                                        value={selectedBaseURL}
+                                        onValueChange={(val) => {
+                                            setKeyTestMessage("Please test your key")
+                                            setKeyTestResult(false)
+                                            setSelectedBaseURL(val)
+                                            if (val !== "custom") {
+                                                sc.setBaseURL(val)
+                                            } else {
+                                                sc.setBaseURL(customBaseURL)
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select base URL" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white">
+                                            {predefinedBaseURLs.map((item) => (
+                                                <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {selectedBaseURL === "custom" && (
+                                        <Input
+                                            placeholder="Enter custom base URL"
+                                            value={customBaseURL}
+                                            onChange={(e) => {
+                                                const val = e.target.value
+                                                setCustomBaseURL(val)
+                                                sc.setBaseURL(val)
+                                                setKeyTestMessage("Please test your key")
+                                            }}
+                                        />
+                                    )}
+                                </div>
+
+                                <div className="grid gap-1">
+                                    <Label htmlFor="api-key">API-Key</Label>
+                                    <div className="flex gap-4 items-center">
+
+                                        <Input
+                                        value={sc.openaiAPIKey || ""}
+                                        type={keyVisible ? "text" : "password"}
+                                        id="api-key"
+                                        onChange={(e) => {
+                                            sc.setOpenaiAPIKey(e.target.value);
+                                        }}
+                                        />
+
+                                        {keyVisible
+                                            ? <EyeOffIcon onClick={() => setKeyVisible(false)} className="cursor-pointer" />
+                                            : <EyeIcon onClick={() => setKeyVisible(true)} className="cursor-pointer" />
+                                        }
+                                    </div>
+                                </div>
+                            </CardContent>
+
+                            <CardFooter className="p-3 pt-2 flex justify-center">
+                                <StatusIndicator className="" message={KeyTestMessage} isGood={keyTestResult} />
+                            </CardFooter>
+                        </Card>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">3</div>
+                            <h2 className="text-lg font-semibold text-gray-900">Interview Configuration</h2>
+                        </div>
+                        
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                            <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid gap-3">
+
+                                            <Label htmlFor="model">Model</Label>
+                                            <Select value={sc.model || undefined} onValueChange={(model) => sc.setModel(model)}>
+                                                <SelectTrigger id="model" className="items-start">
+                                                    <SelectValue placeholder="Select a model" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-white">
+                                                    {isLoadingModels && <SelectItem disabled value="loading">Loading models...</SelectItem>}
+                                                    {modelLoadError && <SelectItem disabled value="error">{modelLoadError}</SelectItem>}
+                                                    {availableModels.map((modelId) => (
+                                                        <SelectItem key={modelId} value={modelId}>{modelId}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="n_stimuli" className="place-self-start">Number of selected Stimuli <Info className="size-4 inline-block ml-0.5" /></Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    Number of Stimuli that will be elicitated by User. <br />
+                                                    This also determines the number of interview chats.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Input value={sc.n_stimuli} id="num_of_selection" type="number" placeholder="2" step="1" min={1} max={sc.stimuli.length} onChange={(e) => sc.setN_stimuli(Number(e.target.value))} />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid gap-3">
+                                            <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Label htmlFor="n_values_max" className="place-self-start">
+                                                Max values per chat <Info className="size-4 inline-block ml-1" />
+                                                </Label>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="left" sideOffset={5}>
+                                                Limits how many values a participant can enter per stimulus chat.
+                                            </TooltipContent>
+                                            </Tooltip>
+
+                                            <Select
+                                            value={String(sc.n_values_max ?? -1)}
+                                            onValueChange={(v) => sc.setN_values_max(Number(v))}
+                                            >
+                                            <SelectTrigger id="n_values_max" className="items-start">
+                                                <SelectValue placeholder="Select a limit" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                <SelectItem value="-1">No limit</SelectItem>
+                                                {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="min_nodes" className="place-self-start">
+                                                    Min Nodes per chat<Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    Minimal amount of nodes needed to enable default stop rule (empty queue). Topic and stimulus count toward all nodes (Lower than 3 has no effect). Expect about 7 until the first value is reached.
+                                                </TooltipContent>
+                                            </Tooltip>
+
+                                            <Input value={minNodes} id="min_nodes" type="number" placeholder="8" step="1" min={3} max={20} onChange={(e) => setMinNodes(Number(e.target.value))} />
+                                        </div>
+                                        
+
+                                        <div className="grid gap-3">
+                                            <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Label htmlFor="time_limit" className="place-self-start">
+                                                Time limit<Info className="size-4 inline-block ml-1" />
+                                                </Label>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="left" sideOffset={5}>
+                                                Limits the time of an interview.
+                                            </TooltipContent>
+                                            </Tooltip>
+
+                                            <Select
+                                            value={String(timeLimit ?? -1)}
+                                            onValueChange={(v) => setTimeLimit(Number(v))}
+                                            >
+                                            <SelectTrigger id="time_limit" className="items-start">
+                                                <SelectValue placeholder="Select a limit" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                <SelectItem value="-1">No limit</SelectItem>
+                                                {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map((n) => (
+                                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+                                        
+
+                                        <div className="grid gap-3">
+                                            
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="advanced-voice-enabled" className="place-self-start">
+                                                    Max retries <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    How many times the user can stay on the same node without ending the stimuli chat automatically
+                                                </TooltipContent>
+                                            </Tooltip>
+
+                                            <Select
+                                            value={String(maxRetries ?? -1)}
+                                            onValueChange={(v) => setMaxRetries(Number(v))}
+                                            >
+                                            <SelectTrigger id="n_values_max" className="items-start">
+                                                <SelectValue placeholder="Select a limit" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                <SelectItem value="-1">No limit</SelectItem>
+                                                {[1,2,3,4,5].map((n) => (
+                                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                            </Select>  
+                                        </div>
+
+
+                                        <div className="grid gap-3">
+                                            
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="tree-enabled" className="place-self-start">
+                                                    Enable permanent tree view <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="left" sideOffset={5}>
+                                                    Interviewee can see their own tree at any point of time in the interview (default: false)
+                                                </TooltipContent>
+                                            </Tooltip>
+
+                                            <Select
+                                            value={String(treeEnabled)}
+                                            onValueChange={(v) => setTreeEnabled(v === "true")}
+                                            >
+                                            <SelectTrigger id="tree-enabled" className="items-start">
+                                                <SelectValue placeholder="Select option" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                <SelectItem value="true">True</SelectItem>
+                                                <SelectItem value="false">False</SelectItem>
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+
+
+                                        <div className="grid gap-3">
+                                            
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="advanced-voice-enabled" className="place-self-start">
+                                                    Interview mode <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="left" sideOffset={5}>
+                                                    <div>Hybrid     - Dialog with agent is enabled, but the user can also type directly</div>
+                                                    <div>Text only  - Dialog with agent is disabled</div>
+                                                    <div>Voice only - Dialog with agent is the only interaction</div>
+                                                </TooltipContent>
+                                            </Tooltip>
+
+                                            <Select
+                                            value={String(interviewMode)}
+                                            onValueChange={(v) => {
+                                                setInterviewMode(Number(v));
+                                                if (v == "2") {setAdvancedVoiceEnabled(false); setVoiceEnabled(false);}
+                                                if (v == "3") {setAdvancedVoiceEnabled(true);}
+                                            }}
+                                            >
+                                            <SelectTrigger id="advanced-voice-enabled" className="items-start">
+                                                <SelectValue placeholder="Select option" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                <SelectItem value="1">Hybrid</SelectItem>
+                                                <SelectItem value="2">Text Only</SelectItem>
+                                                <SelectItem value="3">Voice Only</SelectItem>
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="voice-enabled" className="place-self-start">
+                                                    Enable Dictate Button <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    Enables user voice input and its transcription
+                                                </TooltipContent>
+                                            </Tooltip>
+
+                                            <Select
+                                            value={String(voiceEnabled)}
+                                            onValueChange={(v) => {
+                                                setVoiceEnabled(v === "true");
+                                                if (interviewMode == 2 && v === "true") {setInterviewMode(1)}
+                                                if (!advancedVoiceEnabled && v === "false") {setInterviewMode(2)}
+                                            
+                                            }}
+                                            >
+                                            <SelectTrigger id="voice-enabled" className="items-start">
+                                                <SelectValue placeholder="Select option" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                <SelectItem value="true">True</SelectItem>
+                                                <SelectItem value="false">False</SelectItem>
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="voice-enabled" className="place-self-start">
+                                                    Enable Voice Agent Button<Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    Enables direct communication
+                                                </TooltipContent>
+                                            </Tooltip>
+
+                                            <Select
+                                            value={String(advancedVoiceEnabled)}
+                                            onValueChange={(v) => {
+                                                setAdvancedVoiceEnabled(v === "true");
+                                                if (interviewMode == 2 && v === "true") {setInterviewMode(1)}
+                                                if (!voiceEnabled && v === "false") {setInterviewMode(2)}
+                                            }}
+                                            >
+                                            <SelectTrigger id="advanced-voice-enabled" className="items-start">
+                                                <SelectValue placeholder="Select option" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                <SelectItem value="true">True</SelectItem>
+                                                <SelectItem value="false">False</SelectItem>
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                    {advancedVoiceEnabled &&
+
+                                        <div className="grid gap-3">
+                                            
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label htmlFor="voice-enabled" className="place-self-start">
+                                                    Auto send avm messages <Info className="size-4 inline-block ml-1" />
+                                                    </Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" sideOffset={5}>
+                                                    When in the advanced voice mode, user messages will be sent to agent if user stops talking automatically.
+                                                </TooltipContent>
+                                            </Tooltip>
+
+                                            <Select
+                                            value={String(autoSend)}
+                                            onValueChange={(v) => {
+                                                setAutoSend(v === "true");
+                                            }}
+                                            >
+                                            <SelectTrigger id="auto-send" className="items-start">
+                                                <SelectValue placeholder="Select option" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white">
+                                                <SelectItem value="false">False</SelectItem>
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+
+
+
+                                    }
+
+                                    <div className="grid gap-3">
+                                        
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Label htmlFor="voice-enabled" className="place-self-start">
+                                                Language<Info className="size-4 inline-block ml-1" />
+                                                </Label>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" sideOffset={5}>
+                                                The Language of the experiment
+                                            </TooltipContent>
+                                        </Tooltip>
+
+                                        <Select
+                                        value={String(language)}
+                                        onValueChange={(v) => {
+                                            setLanguage(v)
+                                        }}
+                                        >
+                                        <SelectTrigger id="advanced-voice-enabled" className="items-start">
+                                            <SelectValue placeholder="Select option" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white">
+                                            <SelectItem value="en">English</SelectItem>
+                                            <SelectItem value="de">German</SelectItem>
+                                        </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {interviewMode != 2 &&
+                                    <div className="grid gap-1 col-span-full">
+                                        
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Label htmlFor="select-stt-provider" className="place-self-start">
+                                                Speech-to-Text Provider<Info className="size-4 inline-block ml-1" />
+                                                </Label>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" sideOffset={5}>
+                                                The endpoint used to extract text from user voice
+                                            </TooltipContent>
+                                        </Tooltip>
+
+                                        <Select
+                                        value={sttProvider}
+                                        onValueChange={(v) => {
+                                            setSttProvider(v)
+                                        }}
+                                        >
+                                        <SelectTrigger id="select-stt-provider-option" className="items-start">
+                                            <SelectValue placeholder="Select option" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white">
+                                            <SelectItem value="Microsoft Azure">Microsoft Azure</SelectItem>
+                                            { false &&
+                                            <SelectItem value="KIT Whisper">KIT Whisper</SelectItem>
+                                            }
+                                        </SelectContent>
+                                        </Select>
+
+                                        {sttProvider == "Microsoft Azure" &&
+                                            <div className="grid gap-1 col-span-full">
+
+                                                <div className="flex gap-4 items-center">
+                                                    
+                                                    <Input
+                                                    value={sttEndpoint || ""}
+                                                    placeholder="https://germanywestcentral.api.cognitive.microsoft.com/"
+                                                    type={"text"}
+                                                    id="stt-endpoint"
+                                                    onChange={async (e) => {
+                                                        setSttEndpoint(e.target.value);
+                                                    }}
+                                                    />
+
+                                                </div>
+
+                                            </div>
+                                        }
+                                    
+                                        {sttProvider == "Microsoft Azure" &&
+                                            <div className="grid gap-1 col-span-full">
+                                                <div className="flex gap-4 items-center">
+                                                    
+
+                                                    <Input
+                                                    value={sttKey || ""}
+                                                    placeholder="Microsoft Azure Speech-to-Text Api Key"
+                                                    type={sttKeyVisible ? "text" : "password"}
+                                                    id="stt-key"
+                                                    onChange={async (e) => {
+                                                        setSttKey(e.target.value);
+                                                    }}
+                                                    />
+
+                                                    {sttKeyVisible
+                                                        ? <EyeOffIcon onClick={() => setSttKeyVisible(false)} className="cursor-pointer" />
+                                                        : <EyeIcon onClick={() => setSttKeyVisible(true)} className="cursor-pointer" />
+                                                    }
+
+                                                </div>
+                                            
+                                
+                                            </div>
+                                        }
+                                        
+
+                                    
+
+
+                                    </div>
+                                    }
+
+
+
+
+                                    {interviewMode != 2 &&
+                                    <div className="grid gap-1 col-span-full">
+
+                                        <Label htmlFor="elevenlabs-api-key">Elevenlabs Text-to-Speech API-Key</Label>
+                                        <div className="flex gap-4 items-center">
+                                            
+
+                                            <Input
+                                            value={elevenabsKey || ""}
+                                            placeholder="(If no key or an invalid one is provided, the browser tts will answer)"
+                                            type={elevenlabsKeyVisible ? "text" : "password"}
+                                            id="elevenlabs-api-key"
+                                            onChange={async (e) => {
+                                                setElevenlabsKey(e.target.value);
+                                                if (await testElevenLabsKeyForTTS(e.target.value, "EXAVITQu4vr4xnSDxMaL")) {
+                                                    setElevenlabsKeyTestResult(true)
+                                                } else {
+                                                    setElevenlabsKeyTestResult(false)
+                                                }
+                                                
+                                            }}
+                                            />
+
+                                            {elevenlabsKeyVisible
+                                                ? <EyeOffIcon onClick={() => setElevenlabsKeyVisible(false)} className="cursor-pointer" />
+                                                : <EyeIcon onClick={() => setElevenlabsKeyVisible(true)} className="cursor-pointer" />
+                                            }
+                                            {elevenlabsKeyTestResult ? <Check/> : <X/>}
+                                        </div>
+
+                        
+                                    </div>
+                                    }
+
+
+
+
+                                    {interviewMode != 2 && (
+                                    <div className="grid gap-1 col-span-full">
+                                        <Label>Cloudflare R2 Account (optional - only if user voice should be saved)</Label>
+
+                                        <CloudflareR2Tester
+                                        apiPath={`${api_url}/cloudflare/test`}
+                                        initialAccountId={r2ID}
+                                        initialAccessKeyId={r2Key}
+                                        initialSecretAccessKey={r2Secret}
+                                        initialBucket={r2Bucket}
+                                        onValidatedChange={(r2) => {
+                                            setr2ID(r2.accountId);
+                                            setr2Key(r2.accessKeyId);
+                                            setr2Secret(r2.secretAccessKey);
+                                            setr2Bucket(r2.bucket);
+                                        }}
+                                        />
+                                    </div>
+                                    )}
+
+
+                                    </div>
+
+
+                                    <div className="border border-gray-200 bg-white rounded-lg p-4 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                        <h3 className="font-medium text-gray-900">Stimulus Collection</h3>
+                                        <Button
+                                            className=""
+                                            variant="outline"
+                                            onClick={() => mutcreateStimuli()}
+                                            disabled={!sc.model}
+                                        >
+                                            {isPending ? (
+                                            <LoaderCircle className="animate-spin" />
+                                            ) : sc.model ? (
+                                            <span>Suggest Stimuli with {sc.model}</span>
+                                            ) : (
+                                            <span>No model selected</span>
+                                            )}
+                                        </Button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {sc.stimuli.map((item, index) => (
+                                                <div className="space-y-2" key={index}>
+                                                    <div className="flex justify-between items-center">
+                                                        <Label>Stimulus {index + 1}</Label>
+                                                        <Button className="justify-self-end" variant="destructive" size="sm" onClick={() => handleDeleteInput(index)}>
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    </div>
+                                                    <Textarea
+                                                        onChange={(e) => {
+                                                            handleChange(index, e)
+                                                        }}
+                                                        className="resize-none"
+                                                        id={"" + (index + 1)}
+                                                        placeholder="Enter Stimulus..."
+                                                        value={item}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <Button variant="outline" onClick={handleAddInput} className="w-full">Add Stimulus</Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </div>
+
+            <div className="border-t border-gray-200 bg-gray-50 p-4">
+                <div className="mx-auto">
+                    <div className="relative flex items-center w-full">
+                    <div className="absolute left-1/2 -translate-x-1/2">
+                        <StatusIndicator message={err_message} isGood={startable} />
+                    </div>
+
+                    <div className="ml-auto">
+                        <Button
+                        variant="default"
+                        className="h-12 w-72 bg-blue-600 hover:bg-blue-700"
+                        disabled={!startable || isCreatingProject || !keyTestResult}
+                        onClick={() => createProject()}
+                        >
+                        {isCreatingProject ? (
+                            <LoaderCircle className="animate-spin" />
+                        ) : (
+                            <>
+                            <ChevronRightIcon className="mr-2 h-4 w-4" />
+                            Generate Project Link
+                            </>
+                        )}
+                        </Button>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+
+    </RequireAuthLevel>
+
+
+    )
+}

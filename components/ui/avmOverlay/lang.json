@@ -1,0 +1,35 @@
+{
+  "en": {
+    "AvmOverlay": {
+      "fps_label": "Frames per second",
+      "label_thinking": "thinking…",
+      "label_listen": "listen to agent…",
+      "label_speak_now": "speak now",
+      "label_idle": "...",
+      "close_title": "Close",
+      "close_aria": "Close advanced voice chat",
+      "skip_title": "Skip audio and speak now",
+      "skip_btn": "Skip",
+      "send_buffer_title_send": "Send buffer",
+      "send_buffer_title_empty": "Nothing to send",
+      "send_button": "Send"
+    }
+  },
+  "de": {
+    "AvmOverlay": {
+      "fps_label": "Bilder pro Sekunde",
+      "label_thinking": "denkt…",
+      "label_listen": "zuhören…",
+      "label_speak_now": "jetzt sprechen",
+      "label_idle": "...",
+      "close_title": "Schließen",
+      "close_aria": "Sprachmodus-Overlay schließen",
+      "skip_title": "Audio überspringen und jetzt sprechen",
+      "skip_btn": "Überspringen",
+      "send_buffer_title_send": "Puffer senden",
+      "send_buffer_title_empty": "Nichts zum Senden",
+      "send_button": "Senden"
+    }
+    }
+  
+}

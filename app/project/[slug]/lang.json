@@ -1,0 +1,47 @@
+{
+  "en": {
+    "ProjectPage": {
+      "project_closed_title": "Project is closed",
+      "project_not_found_title": "Project not found",
+      "project_unavailable_title": "Project unavailable",
+      "project_closed": "Interviews for this project are (currently) closed.",
+      "project_not_found": "The project you're looking for does not exist or has been removed.",
+      "loading": "Loading project…",
+      "project_label": "Project:",
+      "dp_title": "Data Processing and Transparency Disclaimer",
+      "dp_p1": "By participating in this interview, you acknowledge that your responses will be processed using third-party AI services for the purpose of generating interview questions and analyzing responses.",
+      "dp_p2": "In addition, certain data — including your selected stimuli, interaction context, and conversation structure — will be stored for research purposes.",
+      "dp_p3": "We do not store any personal identifiers, and all collected data is handled in accordance with applicable data protection regulations.",
+      "dp_p4": "In the case of this interview the base URL '{baseURL}' will be used.",
+      "dp_p5": "By continuing, you consent to this form of data processing.",
+      "consent_label": "I agree to the use of my responses for research purposes.",
+      "identify_yourself": "Identify yourself",
+      "prolific_id_label": "Prolific ID",
+      "or_label": "OR",
+      "custom_id_label": "Custom ID",
+      "button_continue": "Consent & Continue"
+    }
+  },
+  "de": {
+    "ProjectPage": {
+      "project_closed_title": "Projekt ist vorübergehend geschlossen.",
+      "project_not_found_title": "Projekt wurde nicht gefunden.",
+      "project_unavailable_title": "Projekt nicht verfügbar",
+      "project_closed": "Neue Interviews sind zurzeit geschlossen.",
+      "project_not_found": "Das Projekt, das du suchst, existiert nicht oder wurde entfernt.",
+      "loading": "Projekt wird geladen…",
+      "project_label": "Projekt:",
+      "dp_title": "Hinweis zur Datenverarbeitung und Transparenz",
+      "dp_p1": "Mit deiner Teilnahme erklärst du dich damit einverstanden, dass deine Antworten durch externe KI-Dienste verarbeitet werden, um Interviewfragen zu erstellen und Antworten zu analysieren. Diese Dienste können von Anbietern betrieben werden, die außerhalb der Europäischen Union bzw. des Europäischen Wirtschaftsraums ansässig sind.",
+      "dp_p3": "Es werden keine personenbezogenen Identifikatoren gespeichert, alle erhobenen Daten werden nach geltenden Datenschutzvorgaben verarbeitet.",
+      "dp_p5": "Mit dem Fortfahren stimmst du dieser Form der Datenverarbeitung, einschließlich der möglichen Übermittlung an Anbieter außerhalb Europas, ausdrücklich zu.",
+
+      "consent_label": "Ich stimme der Verwendung meiner Antworten zu Forschungszwecken zu.",
+      "identify_yourself": "Identifiziere dich",
+      "prolific_id_label": "Prolific ID",
+      "or_label": "ODER",
+      "custom_id_label": "Eigene ID",
+      "button_continue": "Zustimmen & Fortfahren"
+    }
+  }
+}

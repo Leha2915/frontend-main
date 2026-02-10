@@ -1,0 +1,50 @@
+{
+  "en": {
+    "stimulus_onboarding": "Onboarding",
+    "onboarding_msg_1": "Welcome to the onboarding!",
+    "onboarding_msg_2": "On the left sidebar, you'll find the tutorials.",
+    "onboarding_msg_3": "If you are ready, then click on the next one.",
+
+    "stimulus_basic": "Basic chat interaction",
+    "basic_msg_1": "You can see a highlighted text field below.",
+    "basic_msg_2": "Type something and press Enter.",
+    "basic_msg_3": "Can you text a bit with me?",
+
+    "stimulus_voice": "Voice mode",
+    "voice_msg_1": "I highlighted the voice mode button for you now.",
+    "voice_msg_2": "Press it to start the voice mode.",
+
+    "stimulus_dictate": "Dictate / Transcribe",
+    "dictate_msg_1": "The dictate button below should now be highlighted.",
+    "dictate_msg_2": "Press the button to start dictating.",
+    "dictate_msg_3": "You might need to enable your mic depending on your browser.",
+
+    "stimulus_all": "All features",
+    "all_msg_1": "I have unlocked all features available to you.",
+    "all_msg_2": "Let's talk briefly about food. What kind of food do you like?"
+  },
+  "de": {
+    "stimulus_onboarding": "Onboarding",
+    "onboarding_msg_1": "Willkommen beim Onboarding!",
+    "onboarding_msg_2": "In der linken Seitenleiste findest du die Tutorials.",
+    "onboarding_msg_3": "Wenn du bereit bist, klicke auf das nächste.",
+
+    "stimulus_basic": "Einfache Chat-Interaktion",
+    "basic_msg_1": "Unten siehst du ein hervorgehobenes Texteingabefeld.",
+    "basic_msg_2": "Tippe etwas ein und drücke Enter.",
+    "basic_msg_3": "Magst du ein bisschen mit mir schreiben?",
+
+    "stimulus_voice": "Sprachmodus",
+    "voice_msg_1": "Ich habe den Sprachmodus-Button für dich hervorgehoben.",
+    "voice_msg_2": "Drücke ihn, um den Sprachmodus zu starten.",
+
+    "stimulus_dictate": "Diktieren / Transkribieren",
+    "dictate_msg_1": "Der Diktier-Button unten sollte jetzt hervorgehoben sein.",
+    "dictate_msg_2": "Drücke den Button, um mit dem Diktieren zu beginnen.",
+    "dictate_msg_3": "Je nach Browser musst du eventuell dein Mikrofon freigeben.",
+
+    "stimulus_all": "Alle Funktionen",
+    "all_msg_1": "Ich habe alle verfügbaren Funktionen für dich freigeschaltet.",
+    "all_msg_2": "Lass uns kurz über Essen sprechen. Welche Art von Essen magst du?"
+  }
+}

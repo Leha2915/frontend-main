@@ -1,0 +1,64 @@
+{
+  "en": {
+    "ChatLayout": {
+      "loading_tree": "Loading interview tree...",
+      "badge_no_limit": "No time limit",
+      "badge_time_up": "Time up",
+      "badge_remaining": "Remaining: {m}:{s}",
+      "session_id_label": "Session ID:",
+      "sidebar_title": "Interview Chats",
+      "sidebar_subtitle": "{count} topics to explore",
+      "status_completed": "Completed",
+      "status_not_started": "Not Started",
+      "status_in_progress": "In Progress",
+      "show_tree_btn": "Show Tree",
+      "show_tree_tt": "Opens your interview tree",
+      "finish_btn": "Finish Interview",
+      "finish_tt_ready": "Complete the interview process",
+      "finish_tt_blocked": "You have to finish all chats in the sidebar to complete the interview",
+      "overlay_title": "Your current interview tree",
+      "overlay_close": "Close",
+      "overlay_close_aria": "Close analytics overlay"
+    },
+
+    "Dashboard": {
+      "welcome_title": "Welcome to LadderChat",
+      "p1_before": "For each",
+      "topic_token": "topic",
+      "p1_after": "shown to the left, you will be interviewed in a separate chat.",
+      "p2_before": "Choose a topic or press",
+      "p2_after": "to start directly."
+    }
+  },
+  "de": {
+    "ChatLayout": {
+      "loading_tree": "Interview-Baum wird geladen...",
+      "badge_no_limit": "Kein Zeitlimit",
+      "badge_time_up": "Zeit abgelaufen",
+      "badge_remaining": "Verbleibend: {m}:{s}",
+      "session_id_label": "Session-ID:",
+      "sidebar_title": "Interview-Chats",
+      "sidebar_subtitle": "{count} Themen zu erkunden",
+      "status_completed": "Abgeschlossen",
+      "status_not_started": "Nicht gestartet",
+      "status_in_progress": "In Bearbeitung",
+      "show_tree_btn": "Baum anzeigen",
+      "show_tree_tt": "Öffnet deinen Interview-Baum",
+      "finish_btn": "Interview beenden",
+      "finish_tt_ready": "Interview abschließen",
+      "finish_tt_blocked": "Du musst alle Chats in der Seitenleiste abschließen, um das Interview zu beenden",
+      "overlay_title": "Dein aktueller Interview-Baum",
+      "overlay_close": "Schließen",
+      "overlay_close_aria": "Overlay des Analysebereichs schließen"
+    },
+
+    "Dashboard": {
+      "welcome_title": "Willkommen bei LadderChat",
+      "p1_before": "Für jedes",
+      "topic_token": "Thema",
+      "p1_after": "in der linken Seitenleiste wirst du in einem eigenen Chat interviewt.",
+      "p2_before": "Wähle ein Thema aus oder drücke",
+      "p2_after": "um direkt zu starten."
+    }
+  }
+}

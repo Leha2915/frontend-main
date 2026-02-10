@@ -1,0 +1,40 @@
+{
+  "en": {
+    "ProjectInfoPage": {
+      "project_label": "Project",
+      "section_overview": "Overview",
+      "section_disclaimer": "Disclaimer",
+      "no_description": "No information available",
+      "no_description_long": "This project currently does not provide any additional information.",
+      "loading": "Loading project information...",
+      "button_continue_onboarding": "Continue to Onboarding",
+      "project_closed_title": "Project closed",
+      "project_closed": "This project is currently closed and not available for participation.",
+      "project_not_found_title": "Project not found",
+      "project_not_found": "The requested project could not be found.",
+      "project_unavailable_title": "Project unavailable",
+      "question_required" : "mandatory question",
+      "complete_required" : "Please read and answer all questions first",
+      "enter_id_to_view_overview" : "Please provide your identification to continue"
+    }
+  },
+  "de": {
+    "ProjectInfoPage": {
+      "project_label": "Projekt",
+      "section_overview": "Übersicht",
+      "section_disclaimer": "Hinweis",
+      "no_description": "Keine Informationen verfügbar",
+      "no_description_long": "Für dieses Projekt liegen derzeit keine weiteren Informationen vor.",
+      "loading": "Lade Projektinformationen...",
+      "button_continue_onboarding": "Weiter zum Onboarding",
+      "project_closed_title": "Projekt geschlossen",
+      "project_closed": "Dieses Projekt ist derzeit geschlossen und kann nicht betreten werden.",
+      "project_not_found_title": "Projekt nicht gefunden",
+      "project_not_found": "Das angeforderte Projekt konnte nicht gefunden werden.",
+      "project_unavailable_title": "Projekt nicht verfügbar",
+      "question_required" : "Pflichtfrage",
+      "complete_required" : "Bitte lese alles und beantworte alle Fragen",
+      "enter_id_to_view_overview" : "Bitte identifiziere dich, um fortzufahren"
+    }
+  }
+}
