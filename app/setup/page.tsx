@@ -736,7 +736,7 @@ export default function Dashboard() {
                                             <p><span className="text-gray-500">Enable permanent tree view:</span> {String(treeEnabled)}</p>
                                             <p><span className="text-gray-500">Interview mode:</span> {interviewMode === 1 ? "Hybrid" : interviewMode === 2 ? "Text Only" : "Voice Only"}</p>
                                             <p><span className="text-gray-500">Enable Dictate Button:</span> {String(voiceEnabled)}</p>
-                                            <p><span className="text-gray-500">Enable Voice Agent Button:</span> {String(advancedVoiceEnabled)}</p>
+                                            <p><span className="text-gray-500">Enable Advanced Voice Agent Button:</span> {String(advancedVoiceEnabled)}</p>
                                             <p><span className="text-gray-500">Language:</span> {language === "de" ? "German" : "English"}</p>
                                             {advancedVoiceEnabled && (
                                                 <p><span className="text-gray-500">Voice output provider:</span> ElevenLabs (if configured) with Browser TTS fallback</p>
@@ -838,7 +838,7 @@ export default function Dashboard() {
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <Label htmlFor="advanced-voice-enabled-step2" className="place-self-start">
-                                                            Enable Voice Agent Button <Info className="size-4 inline-block ml-1" />
+                                                            Enable Advanced Voice Agent Button <Info className="size-4 inline-block ml-1" />
                                                         </Label>
                                                     </TooltipTrigger>
                                                     <TooltipContent side="right" sideOffset={5}>
