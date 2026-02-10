@@ -109,9 +109,9 @@ export default function Dashboard() {
 
 
     const DEFAULT_PREF: (string | RegExp)[] = [
+        "gpt-4o",
         "gpt-oss20B",
         "gpt-oss-120B",
-        "gpt-4o",
         /claude.*sonnet/i,
         /llama.*instruct/i,
         /mistral.*large/i,
