@@ -30,6 +30,9 @@ type ChangeEvent = React.ChangeEvent<HTMLTextAreaElement>
 const api_url = process.env.NEXT_PUBLIC_API_URL;
 const OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1";
 const DEFAULT_MODEL = "gpt-4o";
+const DEFAULT_FINISH_NEXT_TITLE = "What happens next?"
+const DEFAULT_FINISH_NEXT_BODY = "Please continue with the next part of the study by following this link:"
+const DEFAULT_FINISH_NEXT_LINK = "https://survey.iism.kit.edu/index.php/821265?newtest=Y&lang=en"
 
 
 export default function Dashboard() {
@@ -99,6 +102,9 @@ export default function Dashboard() {
     const [maxRetries, setMaxRetries] = useState(3);
 
     const [language, setLanguage] = useState("en");
+    const [finishNextTitle, setFinishNextTitle] = useState(DEFAULT_FINISH_NEXT_TITLE);
+    const [finishNextBody, setFinishNextBody] = useState(DEFAULT_FINISH_NEXT_BODY);
+    const [finishNextLink, setFinishNextLink] = useState(DEFAULT_FINISH_NEXT_LINK);
 
     const [timeLimit, setTimeLimit] = useState(-1);
 
@@ -352,6 +358,9 @@ export default function Dashboard() {
 
             stt_key: apiConfigAdvanced ? sttKey : "",
             stt_endpoint: apiConfigAdvanced ? sttEndpoint : "",
+            finish_next_title: finishNextTitle,
+            finish_next_body: finishNextBody,
+            finish_next_link: finishNextLink,
         }),
         });
 
@@ -959,6 +968,37 @@ export default function Dashboard() {
                         
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
                             <div className="space-y-6">
+                                    <div className="grid grid-cols-1 gap-6">
+                                        <div className="grid gap-3">
+                                            <Label htmlFor="finish-next-title">Finish box title</Label>
+                                            <Input
+                                                id="finish-next-title"
+                                                value={finishNextTitle}
+                                                onChange={(e) => setFinishNextTitle(e.target.value)}
+                                                placeholder={DEFAULT_FINISH_NEXT_TITLE}
+                                            />
+                                        </div>
+                                        <div className="grid gap-3">
+                                            <Label htmlFor="finish-next-body">Finish box description</Label>
+                                            <Textarea
+                                                id="finish-next-body"
+                                                className="resize-none"
+                                                value={finishNextBody}
+                                                onChange={(e) => setFinishNextBody(e.target.value)}
+                                                placeholder={DEFAULT_FINISH_NEXT_BODY}
+                                            />
+                                        </div>
+                                        <div className="grid gap-3">
+                                            <Label htmlFor="finish-next-link">Finish box link URL</Label>
+                                            <Input
+                                                id="finish-next-link"
+                                                value={finishNextLink}
+                                                onChange={(e) => setFinishNextLink(e.target.value)}
+                                                placeholder={DEFAULT_FINISH_NEXT_LINK}
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="grid gap-3">
                                             <Tooltip>

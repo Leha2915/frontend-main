@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import RequireAuthLevel from "@/components/RequireAuthLevel";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
@@ -9,7 +10,41 @@ const AnalyticsLazy = dynamic(
   { ssr: false }
 );
 
+const api_url = process.env.NEXT_PUBLIC_API_URL;
+const DEFAULT_FINISH_NEXT_TITLE = "What happens next?";
+const DEFAULT_FINISH_NEXT_BODY = "Please continue with the next part of the study by following this link:";
+const DEFAULT_FINISH_NEXT_LINK = "https://survey.iism.kit.edu/index.php/821265?newtest=Y&lang=en";
+
+type FinishCopy = {
+  finish_next_title?: string | null;
+  finish_next_body?: string | null;
+  finish_next_link?: string | null;
+};
+
 export default function FinishPage() {
+  const [finishTitle, setFinishTitle] = useState(DEFAULT_FINISH_NEXT_TITLE);
+  const [finishBody, setFinishBody] = useState(DEFAULT_FINISH_NEXT_BODY);
+  const [finishLink, setFinishLink] = useState(DEFAULT_FINISH_NEXT_LINK);
+
+  useEffect(() => {
+    const slug = localStorage.getItem("project");
+    if (!slug || !api_url) return;
+
+    (async () => {
+      try {
+        const res = await fetch(`${api_url}/projects/${slug}`);
+        if (!res.ok) return;
+        const project = (await res.json()) as FinishCopy;
+
+        if (project.finish_next_title?.trim()) setFinishTitle(project.finish_next_title.trim());
+        if (project.finish_next_body?.trim()) setFinishBody(project.finish_next_body.trim());
+        if (project.finish_next_link?.trim()) setFinishLink(project.finish_next_link.trim());
+      } catch (err) {
+        console.warn("Unable to load finish page custom text, using defaults.");
+      }
+    })();
+  }, []);
+
   return (
     <RequireAuthLevel allowGuest>
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
@@ -35,8 +70,7 @@ export default function FinishPage() {
             Interview Complete!
           </h1>
           <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-            Thank you for participating in this laddering interview session. You
-            completed part 1.
+            Thank you for participating in this laddering interview session.
           </p>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left mb-6">
@@ -59,18 +93,18 @@ export default function FinishPage() {
 
               <div>
                 <h3 className="text-base font-semibold text-blue-900 mb-1">
-                  What happens next?
+                  {finishTitle}
                 </h3>
                 <p className="text-gray-700 text-base leading-relaxed">
-                  Please continue with the next part of the study by following this link:
+                  {finishBody}
                 </p>
                 <a
-                  href="https://survey.iism.kit.edu/index.php/821265?newtest=Y&lang=en"
+                  href={finishLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 font-medium hover:underline break-all"
                 >
-                  https://survey.iism.kit.edu/index.php/821265?newtest=Y&lang=en
+                  {finishLink}
                 </a>
               </div>
             </div>
