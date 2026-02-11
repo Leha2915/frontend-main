@@ -358,6 +358,9 @@ export default function Dashboard() {
 
             stt_key: apiConfigAdvanced ? sttKey : "",
             stt_endpoint: apiConfigAdvanced ? sttEndpoint : "",
+            stt_provider: apiConfigAdvanced
+                ? (sttProvider === "KIT KARAI" ? "karai" : "azure")
+                : "azure",
             finish_next_title: finishNextTitle,
             finish_next_body: finishNextBody,
             finish_next_link: finishNextLink,
@@ -652,6 +655,7 @@ export default function Dashboard() {
                                                 </SelectTrigger>
                                                 <SelectContent className="bg-white">
                                                     <SelectItem value="Microsoft Azure">Microsoft Azure</SelectItem>
+                                                    <SelectItem value="KIT KARAI">KIT KARAI</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -690,6 +694,11 @@ export default function Dashboard() {
                                                     </div>
                                                 </div>
                                             </>
+                                        )}
+                                        {sttProvider === "KIT KARAI" && (
+                                            <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                                                Using KIT KARAI endpoint: <span className="font-mono">https://karai.k8s.iism.kit.edu/transcribe</span>
+                                            </div>
                                         )}
 
                                         <div className="grid gap-1">
