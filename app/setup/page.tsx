@@ -1129,42 +1129,43 @@ export default function Dashboard() {
                         </div>
                 </div>
 
-                <div className="max-w-4xl mx-auto w-full space-y-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">5</div>
-                        <h2 className="text-lg font-semibold text-gray-900">End Card</h2>
-                    </div>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">5</div>
+                            <h2 className="text-lg font-semibold text-gray-900">End Card</h2>
+                        </div>
 
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 gap-6">
-                                <div className="grid gap-3">
-                                    <Label htmlFor="finish-next-title">Finish box title</Label>
-                                    <Input
-                                        id="finish-next-title"
-                                        value={finishNextTitle}
-                                        onChange={(e) => setFinishNextTitle(e.target.value)}
-                                        placeholder={DEFAULT_FINISH_NEXT_TITLE}
-                                    />
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="finish-next-body">Finish box description</Label>
-                                    <Textarea
-                                        id="finish-next-body"
-                                        className="resize-none"
-                                        value={finishNextBody}
-                                        onChange={(e) => setFinishNextBody(e.target.value)}
-                                        placeholder={DEFAULT_FINISH_NEXT_BODY}
-                                    />
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="finish-next-link">Finish box link URL</Label>
-                                    <Input
-                                        id="finish-next-link"
-                                        value={finishNextLink}
-                                        onChange={(e) => setFinishNextLink(e.target.value)}
-                                        placeholder={DEFAULT_FINISH_NEXT_LINK}
-                                    />
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 gap-6">
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="finish-next-title">Finish box title</Label>
+                                        <Input
+                                            id="finish-next-title"
+                                            value={finishNextTitle}
+                                            onChange={(e) => setFinishNextTitle(e.target.value)}
+                                            placeholder={DEFAULT_FINISH_NEXT_TITLE}
+                                        />
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="finish-next-body">Finish box description</Label>
+                                        <Textarea
+                                            id="finish-next-body"
+                                            className="resize-none"
+                                            value={finishNextBody}
+                                            onChange={(e) => setFinishNextBody(e.target.value)}
+                                            placeholder={DEFAULT_FINISH_NEXT_BODY}
+                                        />
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="finish-next-link">Finish box link URL</Label>
+                                        <Input
+                                            id="finish-next-link"
+                                            value={finishNextLink}
+                                            onChange={(e) => setFinishNextLink(e.target.value)}
+                                            placeholder={DEFAULT_FINISH_NEXT_LINK}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
