@@ -248,8 +248,8 @@ export default function Dashboard() {
 
     const key = sc.openaiAPIKey?.trim();
     if (!key) {
-        setKeyTestMessage("Please provide an API key or switch to Default mode");
-        setKeyTestResult(false);
+        setKeyTestMessage("No key entered - backend default is used if configured");
+        setKeyTestResult(true);
         return;
     }
 
@@ -1191,7 +1191,7 @@ export default function Dashboard() {
                         <Button
                         variant="default"
                         className="h-12 w-72 bg-blue-600 hover:bg-blue-700"
-                        disabled={!startable || isCreatingProject || (apiConfigAdvanced && !keyTestResult)}
+                        disabled={!startable || isCreatingProject || (apiConfigAdvanced && !!sc.openaiAPIKey?.trim() && !keyTestResult)}
                         onClick={() => createProject()}
                         >
                         {isCreatingProject ? (
