@@ -1129,7 +1129,7 @@ export default function Dashboard() {
                         </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="max-w-4xl mx-auto w-full space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">5</div>
                         <h2 className="text-lg font-semibold text-gray-900">End Card</h2>
