@@ -550,7 +550,7 @@ export default function Dashboard() {
                             <CardContent className="space-y-4 flex flex-col">
                                 <div className="order-2 space-y-4">
                                     {!apiConfigAdvanced && (
-                                        <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
+                                        <div className="mt-2 rounded-md border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
                                             <p className="font-medium text-gray-900">Default configuration summary</p>
                                             <p><span className="text-gray-500">LLM provider:</span> OpenAI (default)</p>
                                             <p><span className="text-gray-500">LLM base URL:</span> {OPENAI_DEFAULT_BASE_URL}</p>
