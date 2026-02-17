@@ -33,6 +33,26 @@ const DEFAULT_MODEL = "gpt-4o";
 const DEFAULT_FINISH_NEXT_TITLE = "What happens next?"
 const DEFAULT_FINISH_NEXT_BODY = "Please continue with the next part of the study by following this link:"
 const DEFAULT_FINISH_NEXT_LINK = "https://survey.iism.kit.edu/index.php/821265?newtest=Y&lang=en"
+const INFO_DEFAULTS = {
+    en: {
+        purposeTitle: "Purpose of the Study",
+        purposeBody:
+            "This study aims to explore your goals when using smartphones. We will use an interview tool to understand how end users perceive different smartphone functionalities. It is especially important for us to learn why certain features and characteristics matter to you.",
+        taskTitle: "Your Task",
+        taskBody:
+            "Imagine you have been asked to help develop a new smartphone. To ensure that this product is perfectly tailored to you, we will conduct a short interview with you today. You will complete this interview as a potential user of the new smartphone. Several questions will guide you through the interview. Please answer them truthfully and in detail.",
+        question2Prompt: "We aim to find out what your goals are when using smartphones.",
+    },
+    de: {
+        purposeTitle: "Zweck der Studie",
+        purposeBody:
+            "In dieser wissenschaftlichen Studie geht es um die Untersuchung deiner Ziele bei der Nutzung von Smartphones. Dazu verwenden wir ein Tool zur Durchführung eines Interviews, um zu verstehen, wie Endnutzer Produkte und Services wahrnehmen. Dabei ist uns besonders wichtig zu erfahren, warum bestimmte Eigenschaften und Features wichtig sind.",
+        taskTitle: "Deine Aufgabe",
+        taskBody:
+            "Stelle dir vor, du wurdest gebeten, bei der Entwicklung einer neuen App für Smartphones zu unterstützen. Damit diese App perfekt auf dich zugeschnitten ist, führt der Anbieter heute ein kurzes Interview mit dir. Dieses führst du als potenzieller Nutzer der neuen App mit unserem Tool durch. Mehrere Fragen werden dich durch das Interview führen. Beantworte die Fragen wahrheitsgemäß und detailliert.",
+        question2Prompt: "Wir versuchen dadurch herauszufinden, was deine Ziele bei der Nutzung von Smartphones sind.",
+    },
+} as const
 
 
 export default function Dashboard() {
@@ -105,6 +125,11 @@ export default function Dashboard() {
     const [finishNextTitle, setFinishNextTitle] = useState(DEFAULT_FINISH_NEXT_TITLE);
     const [finishNextBody, setFinishNextBody] = useState(DEFAULT_FINISH_NEXT_BODY);
     const [finishNextLink, setFinishNextLink] = useState(DEFAULT_FINISH_NEXT_LINK);
+    const [infoPurposeTitle, setInfoPurposeTitle] = useState(INFO_DEFAULTS.en.purposeTitle);
+    const [infoPurposeBody, setInfoPurposeBody] = useState(INFO_DEFAULTS.en.purposeBody);
+    const [infoTaskTitle, setInfoTaskTitle] = useState(INFO_DEFAULTS.en.taskTitle);
+    const [infoTaskBody, setInfoTaskBody] = useState(INFO_DEFAULTS.en.taskBody);
+    const [infoQuestion2Prompt, setInfoQuestion2Prompt] = useState(INFO_DEFAULTS.en.question2Prompt);
 
     const [timeLimit, setTimeLimit] = useState(-1);
 
@@ -364,6 +389,11 @@ export default function Dashboard() {
             finish_next_title: finishNextTitle,
             finish_next_body: finishNextBody,
             finish_next_link: finishNextLink,
+            info_purpose_title: infoPurposeTitle,
+            info_purpose_body: infoPurposeBody,
+            info_task_title: infoTaskTitle,
+            info_task_body: infoTaskBody,
+            info_question2_prompt: infoQuestion2Prompt,
         }),
         });
 
@@ -423,6 +453,15 @@ export default function Dashboard() {
             sc.setModel(pickDefaultModel(availableModels));
         }
     }, [availableModels, sc.model]);
+
+    useEffect(() => {
+        const defaults = language === "de" ? INFO_DEFAULTS.de : INFO_DEFAULTS.en;
+        setInfoPurposeTitle(defaults.purposeTitle);
+        setInfoPurposeBody(defaults.purposeBody);
+        setInfoTaskTitle(defaults.taskTitle);
+        setInfoTaskBody(defaults.taskBody);
+        setInfoQuestion2Prompt(defaults.question2Prompt);
+    }, [language]);
 
 
     const downloadSettingsConfig = () => {
@@ -1139,6 +1178,67 @@ export default function Dashboard() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">5</div>
+                        <h2 className="text-lg font-semibold text-gray-900">Project Info Page Texts</h2>
+                    </div>
+
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 gap-6">
+                                <div className="grid gap-3">
+                                    <Label htmlFor="info-purpose-title">Purpose section title</Label>
+                                    <Input
+                                        id="info-purpose-title"
+                                        value={infoPurposeTitle}
+                                        onChange={(e) => setInfoPurposeTitle(e.target.value)}
+                                        placeholder={INFO_DEFAULTS.en.purposeTitle}
+                                    />
+                                </div>
+                                <div className="grid gap-3">
+                                    <Label htmlFor="info-purpose-body">Purpose section text</Label>
+                                    <Textarea
+                                        id="info-purpose-body"
+                                        className="resize-none"
+                                        value={infoPurposeBody}
+                                        onChange={(e) => setInfoPurposeBody(e.target.value)}
+                                        placeholder={INFO_DEFAULTS.en.purposeBody}
+                                    />
+                                </div>
+                                <div className="grid gap-3">
+                                    <Label htmlFor="info-task-title">Your task section title</Label>
+                                    <Input
+                                        id="info-task-title"
+                                        value={infoTaskTitle}
+                                        onChange={(e) => setInfoTaskTitle(e.target.value)}
+                                        placeholder={INFO_DEFAULTS.en.taskTitle}
+                                    />
+                                </div>
+                                <div className="grid gap-3">
+                                    <Label htmlFor="info-task-body">Your task section text</Label>
+                                    <Textarea
+                                        id="info-task-body"
+                                        className="resize-none"
+                                        value={infoTaskBody}
+                                        onChange={(e) => setInfoTaskBody(e.target.value)}
+                                        placeholder={INFO_DEFAULTS.en.taskBody}
+                                    />
+                                </div>
+                                <div className="grid gap-3">
+                                    <Label htmlFor="info-question2">Question 2 prompt</Label>
+                                    <Textarea
+                                        id="info-question2"
+                                        className="resize-none"
+                                        value={infoQuestion2Prompt}
+                                        onChange={(e) => setInfoQuestion2Prompt(e.target.value)}
+                                        placeholder={INFO_DEFAULTS.en.question2Prompt}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">6</div>
                         <h2 className="text-lg font-semibold text-gray-900">End Card</h2>
                     </div>
 
