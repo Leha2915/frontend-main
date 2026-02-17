@@ -125,11 +125,11 @@ export default function Dashboard() {
     const [finishNextTitle, setFinishNextTitle] = useState(DEFAULT_FINISH_NEXT_TITLE);
     const [finishNextBody, setFinishNextBody] = useState(DEFAULT_FINISH_NEXT_BODY);
     const [finishNextLink, setFinishNextLink] = useState(DEFAULT_FINISH_NEXT_LINK);
-    const [infoPurposeTitle, setInfoPurposeTitle] = useState(INFO_DEFAULTS.en.purposeTitle);
-    const [infoPurposeBody, setInfoPurposeBody] = useState(INFO_DEFAULTS.en.purposeBody);
-    const [infoTaskTitle, setInfoTaskTitle] = useState(INFO_DEFAULTS.en.taskTitle);
-    const [infoTaskBody, setInfoTaskBody] = useState(INFO_DEFAULTS.en.taskBody);
-    const [infoQuestion2Prompt, setInfoQuestion2Prompt] = useState(INFO_DEFAULTS.en.question2Prompt);
+    const [infoPurposeTitle, setInfoPurposeTitle] = useState<string>(INFO_DEFAULTS.en.purposeTitle);
+    const [infoPurposeBody, setInfoPurposeBody] = useState<string>(INFO_DEFAULTS.en.purposeBody);
+    const [infoTaskTitle, setInfoTaskTitle] = useState<string>(INFO_DEFAULTS.en.taskTitle);
+    const [infoTaskBody, setInfoTaskBody] = useState<string>(INFO_DEFAULTS.en.taskBody);
+    const [infoQuestion2Prompt, setInfoQuestion2Prompt] = useState<string>(INFO_DEFAULTS.en.question2Prompt);
 
     const [timeLimit, setTimeLimit] = useState(-1);
 
