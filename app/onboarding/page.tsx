@@ -135,6 +135,7 @@ export default function OnboardingPage() {
   const [messages, setMessages] = useState<MockMsg[]>([])
   const [input, setInput] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [isDictationProcessing, setIsDictationProcessing] = useState(false)
   const [enterHint, setEnterHint] = useState(false)
   const allFinished = useMemo(() => topics.every((t) => t.finished), [topics])
 
@@ -316,7 +317,7 @@ export default function OnboardingPage() {
   const openAvm = async (opts?: { readText?: string }) => {
     if (!((activeTopic.kind === "voice" || activeTopic.kind === "all") && !activeTopic.finished))
       return
-    if (dictationRecording) stopDictation()
+    if (dictationRecording || isDictationProcessing) return
 
     setAvmOpen(true)
     voiceLog.onVoiceOpen()
@@ -479,7 +480,7 @@ export default function OnboardingPage() {
   const handleSend = async () => {
     const isTextAllowed = (activeTopic.kind === "basic" || activeTopic.kind === "all") && !activeTopic.finished
     if (!isTextAllowed) return
-    if (dictationRecording) stopDictation()
+    if (dictationRecording || isDictationProcessing) return
 
     const text = input.trim()
     if (!text || isSending) return
@@ -570,27 +571,28 @@ export default function OnboardingPage() {
   }
 
   const stopDictation = async () => {
-    await stopDictationRaw()
-    const text = (drainBuffer() || "").trim()
-
-    log({
-      type: "end_dictation",
-      ctx: { ...getCtx(), topicKind: activeTopic.kind, chatId: activeTopic.chatid },
-      textLength: (text || "").length,
-      value: text
-    })
-
-    if (!text) {
-      enqueueMessages([
-        { id: uid(), role: "assistant", text: getTranslation("app_onboarding.Onboarding.msg_no_voice", lang), delayMs: 300 },
-      ])
-      return
-    }
-
-    const userMsg: MockMsg = { id: uid(), role: "user", text }
-    setMessages((prev) => [...prev, userMsg])
-
+    setIsDictationProcessing(true)
     try {
+      await stopDictationRaw()
+      const text = (drainBuffer() || "").trim()
+
+      log({
+        type: "end_dictation",
+        ctx: { ...getCtx(), topicKind: activeTopic.kind, chatId: activeTopic.chatid },
+        textLength: (text || "").length,
+        value: text
+      })
+
+      if (!text) {
+        enqueueMessages([
+          { id: uid(), role: "assistant", text: getTranslation("app_onboarding.Onboarding.msg_no_voice", lang), delayMs: 300 },
+        ])
+        return
+      }
+
+      const userMsg: MockMsg = { id: uid(), role: "user", text }
+      setMessages((prev) => [...prev, userMsg])
+
       const assistantReplies = countByRole(messagesRef.current, "assistant")
       const path = messagesRef.current.map((m) => m.text).join("\n")
 
@@ -625,6 +627,8 @@ export default function OnboardingPage() {
       enqueueMessages([
         { id: uid(), role: "assistant", text: getTranslation("app_onboarding.Onboarding.error_prefix", lang).replace("{msg}", String(e?.message ?? e)), delayMs: 300 },
       ])
+    } finally {
+      setIsDictationProcessing(false)
     }
   }
 
@@ -932,6 +936,7 @@ export default function OnboardingPage() {
                   onChange={(e) => { setInput(e.target.value); textLog.onChange(e.target.value); }}
                   disabled={
                     isSending ||
+                    isDictationProcessing ||
                     activeTopic.finished ||
                     dictationRecording ||
                     !(activeTopic.kind === "basic" || activeTopic.kind === "all")
@@ -948,6 +953,7 @@ export default function OnboardingPage() {
                   )}
                   onKeyDown={(e) => {
                     if (!(activeTopic.kind === "basic" || activeTopic.kind === "all") || activeTopic.finished || dictationRecording) return
+                    if (isDictationProcessing) return
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault()
                       handleSend()
@@ -980,7 +986,7 @@ export default function OnboardingPage() {
                 <div className={cn("rounded-2xl", highlightDictateBtn && "ring-4 ring-indigo-500 ring-offset-2 ring-offset-white shadow-lg shadow-indigo-200/60 animate-pulse")}>
                   {ENABLES.dictation && (
                     <DictateButton
-                      isDisabled={(!isDictateActive && !isAllActive) || isSending}
+                      isDisabled={(!isDictateActive && !isAllActive) || isSending || isDictationProcessing}
                       isRecording={dictationRecording}
                       micLevel={dictationMicLevel}
                       onStart={startDictation}
@@ -1005,7 +1011,7 @@ export default function OnboardingPage() {
                           : getTranslation("app_onboarding.Onboarding.ttl_voice_disabled", lang)
                       }
                       onClick={handleAvmButtonPress}
-                      disabled={!isVoiceActive && !isAllActive}
+                      disabled={!isVoiceActive && !isAllActive || isDictationProcessing}
                       aria-label={(activeTopic.kind === "voice" || activeTopic.kind === "all") ? "Voice mode button (highlighted)" : "Voice button (disabled)"}
                       aria-live="polite"
                     >
@@ -1019,7 +1025,7 @@ export default function OnboardingPage() {
                     <Button
                       onClick={handleSend}
                       size="icon"
-                      disabled={!isBasicActive || !input.trim() || isSending || dictationRecording}
+                      disabled={!isBasicActive || !input.trim() || isSending || dictationRecording || isDictationProcessing}
                       className={cn("h-12 w-12 rounded-xl", highlightSend && "scale-105")}
                       title={
                         isOnboarding

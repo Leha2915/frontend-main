@@ -23,10 +23,13 @@ export default function DictateButton({ isDisabled, isRecording, micLevel, onSta
     if (isRecording) {
       setStopping(true)
       onConfirmingChange?.(true)
-      await new Promise(res => setTimeout(res, 1500))
-      await onStop()
-      setStopping(false)
-      onConfirmingChange?.(false)
+      try {
+        await new Promise(res => setTimeout(res, 1500))
+        await onStop()
+      } finally {
+        setStopping(false)
+        onConfirmingChange?.(false)
+      }
     } else {
       await onStart()
     }
@@ -36,7 +39,7 @@ export default function DictateButton({ isDisabled, isRecording, micLevel, onSta
     <div className="flex items-center gap-2">
       <Button
         onClick={toggle}
-        disabled={!!isDisabled}
+        disabled={!!isDisabled || stopping}
         size="icon"
         aria-label={isDisabled ? 'Disabled' : (isRecording ? 'Stop recording' : 'Start dictation')}
         title={isDisabled ? 'Disabled' : (isRecording ? 'Stop recording' : 'Start dictation')}
@@ -55,6 +58,7 @@ export default function DictateButton({ isDisabled, isRecording, micLevel, onSta
       {isRecording && (
         <Button
           onClick={onCancel}
+          disabled={!!isDisabled || stopping}
           size="icon"
           aria-label="cancel"
           title="cancel"
