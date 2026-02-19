@@ -506,9 +506,7 @@ export default function Dashboard() {
     return (
 
       <RequireAuthLevel>
-        <div className="flex flex-col h-full bg-white">
-
-            <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full bg-white">
                 <div className="max-w-4xl mx-auto p-6 space-y-8">
                     
                     <div className="space-y-4">
@@ -1331,7 +1329,6 @@ export default function Dashboard() {
                     </div>
                 </div>
                 </div>
-            </div>
 
             <div className="border-t border-gray-200 bg-gray-50 p-4">
                 <div className="mx-auto">
