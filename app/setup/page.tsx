@@ -18,11 +18,12 @@ import { useMutation } from "@tanstack/react-query";
 import { Bird, ChevronRightIcon, Info, LoaderCircle, LockIcon, Rabbit, Trash2, Turtle, UploadIcon, EyeIcon, EyeOffIcon, Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ChatCompletion } from "openai/resources";
-import React, { useContext, useEffect, useState, useLayoutEffect, useRef, useCallback } from "react";
+import React, { useContext, useEffect, useState, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import RequireAuthLevel from "@/components/RequireAuthLevel";
 import { useJWTAuth } from "@/context/jwtAuth";
 import CloudflareR2Tester from "@/components/CloudFlareTester";
+import ProjectInfoBlocksView, { ProjectInfoBlock } from "@/components/project/ProjectInfoBlocksView";
 
 type ButtonEvent = React.MouseEvent<HTMLButtonElement>
 type ChangeEvent = React.ChangeEvent<HTMLTextAreaElement>
@@ -462,6 +463,33 @@ export default function Dashboard() {
         setInfoTaskBody(defaults.taskBody);
         setInfoQuestion2Prompt(defaults.question2Prompt);
     }, [language]);
+
+    const infoPreviewBlocks = useMemo<ProjectInfoBlock[]>(() => {
+        const yesLabel = language === "de" ? "Ja" : "Yes";
+        const noLabel = language === "de" ? "Nein" : "No";
+        return [
+            {
+                type: "section",
+                title: infoPurposeTitle.trim() || INFO_DEFAULTS.en.purposeTitle,
+                body: infoPurposeBody.trim() || INFO_DEFAULTS.en.purposeBody,
+            },
+            {
+                type: "section",
+                title: infoTaskTitle.trim() || INFO_DEFAULTS.en.taskTitle,
+                body: infoTaskBody.trim() || INFO_DEFAULTS.en.taskBody,
+            },
+            {
+                type: "question",
+                id: "goals",
+                prompt: infoQuestion2Prompt.trim() || INFO_DEFAULTS.en.question2Prompt,
+                options: [
+                    { id: "yes", label: yesLabel },
+                    { id: "no", label: noLabel },
+                ],
+                required: true,
+            },
+        ];
+    }, [language, infoPurposeTitle, infoPurposeBody, infoTaskTitle, infoTaskBody, infoQuestion2Prompt]);
 
 
     const downloadSettingsConfig = () => {
@@ -1232,6 +1260,15 @@ export default function Dashboard() {
                                         placeholder={INFO_DEFAULTS.en.question2Prompt}
                                     />
                                 </div>
+                            </div>
+                            <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+                                <p className="text-sm font-medium text-gray-900">Live preview</p>
+                                <ProjectInfoBlocksView
+                                    blocks={infoPreviewBlocks}
+                                    answers={{}}
+                                    interactive={false}
+                                    showRequiredState={false}
+                                />
                             </div>
                         </div>
                     </div>

@@ -12,20 +12,15 @@ import { Label } from "@/components/ui/label"
 import { CheckCircle2, XCircle, AlertTriangle, Fingerprint, UserRound, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import getTranslation from "@/lib/translation"
+import ProjectInfoBlocksView, {
+  ProjectInfoQuestionBlock,
+  ProjectInfoSectionBlock,
+} from "@/components/project/ProjectInfoBlocksView"
 
 const DEV_ALLOW_CUSTOM_ID = false;
 
 type Section = { title: string; body: string }
-type QuestionOption = { id: string; label: string }
-type QuestionBlock = {
-  type: "question"
-  id: string
-  prompt: string
-  options: [QuestionOption, QuestionOption]
-  required?: boolean
-}
-type SectionBlock = { type: "section"; title: string; body: string }
-type InfoBlocksResponse = { blocks: Array<SectionBlock | QuestionBlock> } | { info: string }
+type InfoBlocksResponse = { blocks: Array<ProjectInfoSectionBlock | ProjectInfoQuestionBlock> } | { info: string }
 
 function parseInfoStringToSections(src: string, fallbackTitle: string): Section[] {
   if (!src || !src.trim()) return []
@@ -98,7 +93,7 @@ export default function ProjectPage() {
   const anyIdChosen = isValidId || customIdValid
   const enrollComplete = localConsentChecked && anyIdChosen
 
-  const [blocks, setBlocks] = useState<Array<SectionBlock | QuestionBlock>>([])
+  const [blocks, setBlocks] = useState<Array<ProjectInfoSectionBlock | ProjectInfoQuestionBlock>>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -106,7 +101,7 @@ export default function ProjectPage() {
 
   const questionRefs = useRef({} as Record<string, HTMLElement | null>)
   const requiredQuestionIds = useMemo(
-    () => blocks.filter(b => b.type === "question" && (b as QuestionBlock).required !== false).map(b => (b as QuestionBlock).id),
+    () => blocks.filter(b => b.type === "question" && (b as ProjectInfoQuestionBlock).required !== false).map(b => (b as ProjectInfoQuestionBlock).id),
     [blocks]
   )
   const hasMissingRequired = useMemo(
@@ -352,68 +347,20 @@ export default function ProjectPage() {
                 </p>
               </div>
             )}
-            {!loading && !error && blocks.map((b, idx) => {
-              if (b.type === "section") {
-                const s = b as SectionBlock
-                return (
-                  <section
-                    key={`sec-${idx}-${s.title}`}
-                    className="w-full rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-                  >
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">{s.title}</h3>
-                    <div className="text-gray-800 leading-relaxed whitespace-pre-line">
-                      {s.body}
-                    </div>
-                  </section>
-                )
-              }
-              const q = b as QuestionBlock
-              const selected = answers[q.id] || ""
-              return (
-                <section
-                  key={`q-${q.id}`}
-                  ref={(el) => { questionRefs.current[q.id] = el }}
-                  className={cn(
-                    "w-full rounded-lg border bg-white p-6 shadow-sm",
-                    (q.required ?? true) && !selected ? "border-yellow-300" : "border-gray-200"
-                  )}
-                >
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">{q.prompt}</h4>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {q.options.map(opt => {
-                      const checked = selected === opt.id
-                      return (
-                        <label
-                          key={opt.id}
-                          className={cn(
-                            "flex items-center gap-2 rounded-lg border px-4 py-3 cursor-pointer select-none",
-                            checked ? "border-blue-600 ring-2 ring-blue-100" : "border-gray-300 hover:border-gray-400"
-                          )}
-                        >
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4"
-                            checked={checked}
-                            onChange={() =>
-                              setAnswers(prev => ({
-                                ...prev,
-                                [q.id]: checked ? "" : opt.id,
-                              }))
-                            }
-                          />
-                          <span className="text-gray-900">{opt.label}</span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                  {(q.required ?? true) && !selected && (
-                    <p className="mt-2 text-sm text-amber-700">
-                      {getTranslation("app_info.ProjectInfoPage.question_required", lang)}
-                    </p>
-                  )}
-                </section>
-              )
-            })}
+            {!loading && !error && (
+              <ProjectInfoBlocksView
+                blocks={blocks}
+                answers={answers}
+                questionRefs={questionRefs}
+                questionRequiredLabel={getTranslation("app_info.ProjectInfoPage.question_required", lang)}
+                onAnswerChange={(questionId, nextValue) =>
+                  setAnswers(prev => ({
+                    ...prev,
+                    [questionId]: nextValue,
+                  }))
+                }
+              />
+            )}
           </div>
         )}
       </div>
