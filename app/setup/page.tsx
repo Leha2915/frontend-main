@@ -126,6 +126,7 @@ export default function Dashboard() {
     const [finishNextTitle, setFinishNextTitle] = useState(DEFAULT_FINISH_NEXT_TITLE);
     const [finishNextBody, setFinishNextBody] = useState(DEFAULT_FINISH_NEXT_BODY);
     const [finishNextLink, setFinishNextLink] = useState(DEFAULT_FINISH_NEXT_LINK);
+    const [showInfoPreview, setShowInfoPreview] = useState(false);
     const [infoPurposeTitle, setInfoPurposeTitle] = useState<string>(INFO_DEFAULTS.en.purposeTitle);
     const [infoPurposeBody, setInfoPurposeBody] = useState<string>(INFO_DEFAULTS.en.purposeBody);
     const [infoTaskTitle, setInfoTaskTitle] = useState<string>(INFO_DEFAULTS.en.taskTitle);
@@ -1211,65 +1212,80 @@ export default function Dashboard() {
 
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
                         <div className="space-y-6">
-                            <div className="grid grid-cols-1 gap-6">
-                                <div className="grid gap-3">
-                                    <Label htmlFor="info-purpose-title">Purpose section title</Label>
-                                    <Input
-                                        id="info-purpose-title"
-                                        value={infoPurposeTitle}
-                                        onChange={(e) => setInfoPurposeTitle(e.target.value)}
-                                        placeholder={INFO_DEFAULTS.en.purposeTitle}
+                            <div className="flex items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2">
+                                <div className="text-sm font-medium text-gray-900">View mode</div>
+                                <div className="flex items-center gap-2">
+                                    <span className={cn("text-xs", !showInfoPreview ? "text-gray-900 font-medium" : "text-gray-500")}>Edit text</span>
+                                    <Switch
+                                        checked={showInfoPreview}
+                                        onCheckedChange={setShowInfoPreview}
+                                        aria-label="Toggle project info preview mode"
                                     />
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="info-purpose-body">Purpose section text</Label>
-                                    <Textarea
-                                        id="info-purpose-body"
-                                        className="resize-none"
-                                        value={infoPurposeBody}
-                                        onChange={(e) => setInfoPurposeBody(e.target.value)}
-                                        placeholder={INFO_DEFAULTS.en.purposeBody}
-                                    />
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="info-task-title">Your task section title</Label>
-                                    <Input
-                                        id="info-task-title"
-                                        value={infoTaskTitle}
-                                        onChange={(e) => setInfoTaskTitle(e.target.value)}
-                                        placeholder={INFO_DEFAULTS.en.taskTitle}
-                                    />
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="info-task-body">Your task section text</Label>
-                                    <Textarea
-                                        id="info-task-body"
-                                        className="resize-none"
-                                        value={infoTaskBody}
-                                        onChange={(e) => setInfoTaskBody(e.target.value)}
-                                        placeholder={INFO_DEFAULTS.en.taskBody}
-                                    />
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label htmlFor="info-question2">Question 2 prompt</Label>
-                                    <Textarea
-                                        id="info-question2"
-                                        className="resize-none"
-                                        value={infoQuestion2Prompt}
-                                        onChange={(e) => setInfoQuestion2Prompt(e.target.value)}
-                                        placeholder={INFO_DEFAULTS.en.question2Prompt}
-                                    />
+                                    <span className={cn("text-xs", showInfoPreview ? "text-gray-900 font-medium" : "text-gray-500")}>Live preview</span>
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
-                                <p className="text-sm font-medium text-gray-900">Live preview</p>
-                                <ProjectInfoBlocksView
-                                    blocks={infoPreviewBlocks}
-                                    answers={{}}
-                                    interactive={false}
-                                    showRequiredState={false}
-                                />
-                            </div>
+                            {!showInfoPreview ? (
+                                <div className="grid grid-cols-1 gap-6">
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="info-purpose-title">Purpose section title</Label>
+                                        <Input
+                                            id="info-purpose-title"
+                                            value={infoPurposeTitle}
+                                            onChange={(e) => setInfoPurposeTitle(e.target.value)}
+                                            placeholder={INFO_DEFAULTS.en.purposeTitle}
+                                        />
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="info-purpose-body">Purpose section text</Label>
+                                        <Textarea
+                                            id="info-purpose-body"
+                                            className="resize-none"
+                                            value={infoPurposeBody}
+                                            onChange={(e) => setInfoPurposeBody(e.target.value)}
+                                            placeholder={INFO_DEFAULTS.en.purposeBody}
+                                        />
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="info-task-title">Your task section title</Label>
+                                        <Input
+                                            id="info-task-title"
+                                            value={infoTaskTitle}
+                                            onChange={(e) => setInfoTaskTitle(e.target.value)}
+                                            placeholder={INFO_DEFAULTS.en.taskTitle}
+                                        />
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="info-task-body">Your task section text</Label>
+                                        <Textarea
+                                            id="info-task-body"
+                                            className="resize-none"
+                                            value={infoTaskBody}
+                                            onChange={(e) => setInfoTaskBody(e.target.value)}
+                                            placeholder={INFO_DEFAULTS.en.taskBody}
+                                        />
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="info-question2">Question 2 prompt</Label>
+                                        <Textarea
+                                            id="info-question2"
+                                            className="resize-none"
+                                            value={infoQuestion2Prompt}
+                                            onChange={(e) => setInfoQuestion2Prompt(e.target.value)}
+                                            placeholder={INFO_DEFAULTS.en.question2Prompt}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+                                    <p className="text-sm font-medium text-gray-900">Live preview</p>
+                                    <ProjectInfoBlocksView
+                                        blocks={infoPreviewBlocks}
+                                        answers={{}}
+                                        interactive={false}
+                                        showRequiredState={false}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
